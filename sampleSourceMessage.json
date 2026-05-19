@@ -1,0 +1,28 @@
+{
+  "event_MetaData": {
+    "com.standardinsurance.eoi.EventMetaData": {
+      "msg_source": {"string": "EDA"},
+      "message_version": {"string": "v42.0"},
+      "correlation_id": {"string": "abc123-xyz"},
+      "group_id": {"string": "WMT-12345"},
+      "target_hcm": {"string": "Workday"},
+      "target_api_url": {"string": "https://workday.example.com/api/v42.0"},
+      "target_api_token_url": {"string": "https://workday.example.com/token/v42.0"},
+      "event_type": {"string": "BenefitsEOI"},
+      "content_type": {"string": "application/avro"}
+    }
+  },
+  "event_Data": {
+    "com.standardinsurance.eoi.EventData": {
+      "worker_id": {"string": "100319TS"},
+      "worker_id_type": {"string": "Employee_ID"},
+      "worker_descriptor": null,
+      "benefit_plan_id": {"string": "StandardSupLifeEE"},
+      "benefit_plan_id_type": {"string": "Benefit_Plan_ID"},
+      "benefit_plan_descriptor": null,
+      "approve_for_selected": {"boolean": false},
+      "deny_for_selected": {"boolean": true},
+      "eoi_decision_date": {"string": "2023-10-27"}
+    }
+  }
+}

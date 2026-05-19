@@ -1,0 +1,27 @@
+# ============================================================
+# Confluent Cloud API Credentials
+# ============================================================
+confluent_cloud_api_key    = ""
+confluent_cloud_api_secret = ""
+
+# ============================================================
+# Environment and Cluster
+# ============================================================
+environment_id   = ""   # env-xxxxxx
+organization_id  = ""   # UUID from org settings
+kafka_cluster_id = ""   # lkc-xxxxxx
+
+# ============================================================
+# Flink Credentials
+# ============================================================
+flink_rest_endpoint   = ""   # https://flink.<region>.aws.confluent.cloud
+flink_api_key         = ""
+flink_api_secret      = ""
+flink_principal_id    = ""   # u-xxxxxxx
+flink_compute_pool_id = ""   # lfcp-xxxxxx  (from: terraform output flink_compute_pool_id after Stage 1)
+
+# ============================================================
+# UDF Artifact
+# Upload the JAR to Confluent Cloud Artifacts first, then paste the ID here
+# ============================================================
+udf_artifact_id = ""   # cfa-xxxxxx

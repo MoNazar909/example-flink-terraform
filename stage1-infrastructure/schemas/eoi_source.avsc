@@ -1,0 +1,45 @@
+{
+  "type": "record",
+  "name": "EvidenceOfInsurability",
+  "namespace": "com.standardinsurance.eoi",
+  "fields": [
+    {
+      "name": "event_MetaData",
+      "type": ["null", {
+        "type": "record",
+        "name": "EventMetaData",
+        "fields": [
+          {"name": "msg_source", "type": ["null", "string"], "default": null},
+          {"name": "message_version", "type": ["null", "string"], "default": null},
+          {"name": "correlation_id", "type": ["null", "string"], "default": null},
+          {"name": "group_id", "type": ["null", "string"], "default": null},
+          {"name": "target_hcm", "type": ["null", "string"], "default": null},
+          {"name": "target_api_url", "type": ["null", "string"], "default": null},
+          {"name": "target_api_token_url", "type": ["null", "string"], "default": null},
+          {"name": "event_type", "type": ["null", "string"], "default": null},
+          {"name": "content_type", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null
+    },
+    {
+      "name": "event_Data",
+      "type": ["null", {
+        "type": "record",
+        "name": "EventData",
+        "fields": [
+          {"name": "worker_id", "type": ["null", "string"], "default": null},
+          {"name": "worker_id_type", "type": ["null", "string"], "default": null},
+          {"name": "worker_descriptor", "type": ["null", "string"], "default": null},
+          {"name": "benefit_plan_id", "type": ["null", "string"], "default": null},
+          {"name": "benefit_plan_id_type", "type": ["null", "string"], "default": null},
+          {"name": "benefit_plan_descriptor", "type": ["null", "string"], "default": null},
+          {"name": "approve_for_selected", "type": ["null", "boolean"], "default": null},
+          {"name": "deny_for_selected", "type": ["null", "boolean"], "default": null},
+          {"name": "eoi_decision_date", "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "FlinkCommonKafkaPublish",
+  "namespace": "com.standardinsurance.eoi",
+  "fields": [
+    {
+      "name": "flattened_event",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Full event payload serialized as a JSON string"
+    },
+    {
+      "name": "exception",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Serialized JSON string describing the exception; populated only on DLQ messages"
+    },
+    {
+      "name": "target_HCM",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "group_id",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "event_type",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "correlation_id",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

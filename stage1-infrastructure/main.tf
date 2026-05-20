@@ -71,6 +71,24 @@ resource "confluent_kafka_topic" "flink_common" {
   }
 }
 
+resource "confluent_kafka_topic" "flink_common_dlq" {
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.standard_poc.id
+  }
+  topic_name       = "standard.eda.hcmdata.flink.common.dlq"
+  partitions_count = 6
+  rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
+
+  config = {
+    "retention.ms" = "2592000000" # 30 days — longer retention for DLQ investigation
+  }
+
+  credentials {
+    key    = var.kafka_api_key
+    secret = var.kafka_api_secret
+  }
+}
+
 resource "confluent_kafka_topic" "flink_workday" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
@@ -98,7 +116,25 @@ resource "confluent_kafka_topic" "flink_workday_dlq" {
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
   config = {
-    "retention.ms" = "604800000"
+    "retention.ms" = "2592000000" # 30 days
+  }
+
+  credentials {
+    key    = var.kafka_api_key
+    secret = var.kafka_api_secret
+  }
+}
+
+resource "confluent_kafka_topic" "flink_routing_dlq" {
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.standard_poc.id
+  }
+  topic_name       = "standard.eda.hcmdata.flink.routing.dlq"
+  partitions_count = 6
+  rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
+
+  config = {
+    "retention.ms" = "2592000000" # 30 days
   }
 
   credentials {
@@ -144,10 +180,10 @@ resource "confluent_kafka_topic" "flink_hcm2" {
 }
 
 # ============================================================
-# Schema Registry Schemas
+# Schema Registry — Value Schemas
 # ============================================================
 
-resource "confluent_schema" "eoi_source" {
+resource "confluent_schema" "eoi_source_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
@@ -164,7 +200,7 @@ resource "confluent_schema" "eoi_source" {
   depends_on = [confluent_kafka_topic.eoi_source]
 }
 
-resource "confluent_schema" "flink_common" {
+resource "confluent_schema" "flink_common_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
@@ -181,7 +217,24 @@ resource "confluent_schema" "flink_common" {
   depends_on = [confluent_kafka_topic.flink_common]
 }
 
-resource "confluent_schema" "flink_workday" {
+resource "confluent_schema" "flink_common_dlq_value" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_common_dlq.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/flink_common.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_common_dlq]
+}
+
+resource "confluent_schema" "flink_workday_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
@@ -198,7 +251,7 @@ resource "confluent_schema" "flink_workday" {
   depends_on = [confluent_kafka_topic.flink_workday]
 }
 
-resource "confluent_schema" "flink_workday_dlq" {
+resource "confluent_schema" "flink_workday_dlq_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
@@ -215,7 +268,24 @@ resource "confluent_schema" "flink_workday_dlq" {
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
 }
 
-resource "confluent_schema" "workday_sink" {
+resource "confluent_schema" "flink_routing_dlq_value" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_routing_dlq.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/flink_common.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_routing_dlq]
+}
+
+resource "confluent_schema" "workday_sink_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
@@ -232,7 +302,7 @@ resource "confluent_schema" "workday_sink" {
   depends_on = [confluent_kafka_topic.workday_sink]
 }
 
-resource "confluent_schema" "flink_hcm2" {
+resource "confluent_schema" "flink_hcm2_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
@@ -240,6 +310,149 @@ resource "confluent_schema" "flink_hcm2" {
   subject_name  = "${confluent_kafka_topic.flink_hcm2.topic_name}-value"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_hcm2]
+}
+
+# ============================================================
+# Schema Registry — Key Schemas (all topics)
+# Registering a key schema causes Confluent Cloud Flink to
+# auto-discover kafka_key as the PRIMARY KEY on each table,
+# so no ALTER TABLE statements are needed in Stage 2.
+# ============================================================
+
+resource "confluent_schema" "eoi_source_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.eoi_source.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.eoi_source]
+}
+
+resource "confluent_schema" "flink_common_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_common.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_common]
+}
+
+resource "confluent_schema" "flink_common_dlq_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_common_dlq.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_common_dlq]
+}
+
+resource "confluent_schema" "flink_workday_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_workday.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_workday]
+}
+
+resource "confluent_schema" "flink_workday_dlq_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_workday_dlq.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_workday_dlq]
+}
+
+resource "confluent_schema" "flink_routing_dlq_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_routing_dlq.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.flink_routing_dlq]
+}
+
+resource "confluent_schema" "workday_sink_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_sink.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_sink]
+}
+
+resource "confluent_schema" "flink_hcm2_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.flink_hcm2.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
     key    = var.schema_registry_api_key

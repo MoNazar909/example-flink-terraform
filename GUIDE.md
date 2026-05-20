@@ -216,6 +216,25 @@ Upstream EOI System
 
 ---
 
+## Kafka Key Format
+
+Every message produced to `standard.eda.hcmdata.eoi` must use the following key format:
+
+```
+{GroupId}-{WorkerId}-{Target_HCM}-{EventType}
+```
+
+| Field | Source in payload |
+|---|---|
+| `GroupId` | `event_MetaData.group_id` |
+| `WorkerId` | `event_Data.worker_id` |
+| `Target_HCM` | `event_MetaData.target_hcm` |
+| `EventType` | `event_MetaData.event_type` |
+
+**Example:** `WMT-12345-100319TS-Workday-BenefitsEOI`
+
+---
+
 ## Verify Deployment
 
 After both stages apply successfully, confirm in the Confluent Cloud UI:

@@ -71,11 +71,11 @@ resource "confluent_kafka_topic" "flink_common" {
   }
 }
 
-resource "confluent_kafka_topic" "flink_common_dlq" {
+resource "confluent_kafka_topic" "eoi_dlq" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.common.dlq"
+  topic_name       = "standard.eda.hcmdata.eoi.dlq"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -125,11 +125,11 @@ resource "confluent_kafka_topic" "flink_workday_dlq" {
   }
 }
 
-resource "confluent_kafka_topic" "flink_routing_dlq" {
+resource "confluent_kafka_topic" "flink_common_dlq" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.routing.dlq"
+  topic_name       = "standard.eda.hcmdata.flink.common.dlq"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -217,12 +217,12 @@ resource "confluent_schema" "flink_common_value" {
   depends_on = [confluent_kafka_topic.flink_common]
 }
 
-resource "confluent_schema" "flink_common_dlq_value" {
+resource "confluent_schema" "eoi_dlq_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
   rest_endpoint = var.schema_registry_url
-  subject_name  = "${confluent_kafka_topic.flink_common_dlq.topic_name}-value"
+  subject_name  = "${confluent_kafka_topic.eoi_dlq.topic_name}-value"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
@@ -231,7 +231,7 @@ resource "confluent_schema" "flink_common_dlq_value" {
     secret = var.schema_registry_api_secret
   }
 
-  depends_on = [confluent_kafka_topic.flink_common_dlq]
+  depends_on = [confluent_kafka_topic.eoi_dlq]
 }
 
 resource "confluent_schema" "flink_workday_value" {
@@ -268,12 +268,12 @@ resource "confluent_schema" "flink_workday_dlq_value" {
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
 }
 
-resource "confluent_schema" "flink_routing_dlq_value" {
+resource "confluent_schema" "flink_common_dlq_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
   rest_endpoint = var.schema_registry_url
-  subject_name  = "${confluent_kafka_topic.flink_routing_dlq.topic_name}-value"
+  subject_name  = "${confluent_kafka_topic.flink_common_dlq.topic_name}-value"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
@@ -282,7 +282,7 @@ resource "confluent_schema" "flink_routing_dlq_value" {
     secret = var.schema_registry_api_secret
   }
 
-  depends_on = [confluent_kafka_topic.flink_routing_dlq]
+  depends_on = [confluent_kafka_topic.flink_common_dlq]
 }
 
 resource "confluent_schema" "workday_sink_value" {
@@ -360,12 +360,12 @@ resource "confluent_schema" "flink_common_key" {
   depends_on = [confluent_kafka_topic.flink_common]
 }
 
-resource "confluent_schema" "flink_common_dlq_key" {
+resource "confluent_schema" "eoi_dlq_key" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
   rest_endpoint = var.schema_registry_url
-  subject_name  = "${confluent_kafka_topic.flink_common_dlq.topic_name}-key"
+  subject_name  = "${confluent_kafka_topic.eoi_dlq.topic_name}-key"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
@@ -374,7 +374,7 @@ resource "confluent_schema" "flink_common_dlq_key" {
     secret = var.schema_registry_api_secret
   }
 
-  depends_on = [confluent_kafka_topic.flink_common_dlq]
+  depends_on = [confluent_kafka_topic.eoi_dlq]
 }
 
 resource "confluent_schema" "flink_workday_key" {
@@ -411,12 +411,12 @@ resource "confluent_schema" "flink_workday_dlq_key" {
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
 }
 
-resource "confluent_schema" "flink_routing_dlq_key" {
+resource "confluent_schema" "flink_common_dlq_key" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
   rest_endpoint = var.schema_registry_url
-  subject_name  = "${confluent_kafka_topic.flink_routing_dlq.topic_name}-key"
+  subject_name  = "${confluent_kafka_topic.flink_common_dlq.topic_name}-key"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
@@ -425,7 +425,7 @@ resource "confluent_schema" "flink_routing_dlq_key" {
     secret = var.schema_registry_api_secret
   }
 
-  depends_on = [confluent_kafka_topic.flink_routing_dlq]
+  depends_on = [confluent_kafka_topic.flink_common_dlq]
 }
 
 resource "confluent_schema" "workday_sink_key" {
@@ -460,6 +460,172 @@ resource "confluent_schema" "flink_hcm2_key" {
   }
 
   depends_on = [confluent_kafka_topic.flink_hcm2]
+}
+
+# ============================================================
+# Connector Response Topics
+# These are written to by the HTTP Sink Connector after it
+# posts to Workday. Not managed by Flink.
+# ============================================================
+
+resource "confluent_kafka_topic" "workday_response" {
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.standard_poc.id
+  }
+  topic_name       = "standard.eda.hcmdata.workday.response"
+  partitions_count = 6
+  rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
+
+  config = {
+    "retention.ms" = "604800000"
+  }
+
+  credentials {
+    key    = var.kafka_api_key
+    secret = var.kafka_api_secret
+  }
+}
+
+resource "confluent_kafka_topic" "workday_connector_dlq" {
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.standard_poc.id
+  }
+  topic_name       = "standard.eda.hcmdata.workday.dlq"
+  partitions_count = 6
+  rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
+
+  config = {
+    "retention.ms" = "2592000000" # 30 days
+  }
+
+  credentials {
+    key    = var.kafka_api_key
+    secret = var.kafka_api_secret
+  }
+}
+
+resource "confluent_kafka_topic" "workday_error" {
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.standard_poc.id
+  }
+  topic_name       = "standard.eda.hcmdata.workday.error"
+  partitions_count = 6
+  rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
+
+  config = {
+    "retention.ms" = "2592000000" # 30 days
+  }
+
+  credentials {
+    key    = var.kafka_api_key
+    secret = var.kafka_api_secret
+  }
+}
+
+# Value schemas — connector response topics
+
+resource "confluent_schema" "workday_response_value" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_response.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/hcm_sink_response.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_response]
+}
+
+resource "confluent_schema" "workday_connector_dlq_value" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_connector_dlq.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/hcm_sink_response.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_connector_dlq]
+}
+
+resource "confluent_schema" "workday_error_value" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_error.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/hcm_sink_response.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_error]
+}
+
+# Key schemas — connector response topics
+
+resource "confluent_schema" "workday_response_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_response.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_response]
+}
+
+resource "confluent_schema" "workday_connector_dlq_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_connector_dlq.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_connector_dlq]
+}
+
+resource "confluent_schema" "workday_error_key" {
+  schema_registry_cluster {
+    id = var.schema_registry_id
+  }
+  rest_endpoint = var.schema_registry_url
+  subject_name  = "${confluent_kafka_topic.workday_error.topic_name}-key"
+  format        = "AVRO"
+  schema        = file("${path.module}/schemas/kafka_key.avsc")
+
+  credentials {
+    key    = var.schema_registry_api_key
+    secret = var.schema_registry_api_secret
+  }
+
+  depends_on = [confluent_kafka_topic.workday_error]
 }
 
 # ============================================================

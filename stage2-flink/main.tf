@@ -69,7 +69,7 @@ resource "confluent_flink_statement" "register_udf" {
 # Step 1: Flatten EOI source messages into common topic
 # Reads from: standard.eda.hcmdata.eoi
 # Success  →  standard.eda.hcmdata.flink.common
-# DLQ      →  standard.eda.hcmdata.flink.common.dlq
+# DLQ      →  standard.eda.hcmdata.eoi.dlq
 #             (when event_MetaData or event_Data is null)
 #
 # kafka_key is built here from payload fields and carried
@@ -132,7 +132,7 @@ resource "confluent_flink_statement" "flatten_eoi" {
       WHERE event_MetaData IS NOT NULL AND event_Data IS NOT NULL;
 
       -- DLQ path: event_MetaData or event_Data is null
-      INSERT INTO `standard.eda.hcmdata.flink.common.dlq`
+      INSERT INTO `standard.eda.hcmdata.eoi.dlq`
       (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
       SELECT
         CONCAT(
@@ -171,7 +171,7 @@ resource "confluent_flink_statement" "flatten_eoi" {
 # Reads from: standard.eda.hcmdata.flink.common
 # Workday  →  standard.eda.hcmdata.flink.workday
 # HCM2     →  standard.eda.hcmdata.flink.hcm2
-# DLQ      →  standard.eda.hcmdata.flink.routing.dlq
+# DLQ      →  standard.eda.hcmdata.flink.common.dlq
 #             (when target_HCM does not match any known system)
 # ============================================================
 
@@ -214,7 +214,7 @@ resource "confluent_flink_statement" "route_hcm" {
       -- INSERT INTO `standard.eda.hcmdata.flink.sap` (...) SELECT ... WHERE target_HCM = 'SAP';
 
       -- DLQ: target_HCM does not match any configured system
-      INSERT INTO `standard.eda.hcmdata.flink.routing.dlq`
+      INSERT INTO `standard.eda.hcmdata.flink.common.dlq`
       (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
       SELECT
         kafka_key,

@@ -29,7 +29,17 @@ variable "organization_id" {
 }
 
 variable "kafka_cluster_id" {
-  description = "Kafka cluster ID — used as the Flink database name"
+  description = "Kafka cluster ID (e.g. lkc-xxxxxx)"
+  type        = string
+}
+
+variable "flink_catalog" {
+  description = "Flink SQL catalog name — shown in top-right of Flink SQL editor (e.g. default)"
+  type        = string
+}
+
+variable "flink_database" {
+  description = "Flink SQL database name — Kafka cluster display name shown in Flink SQL editor (e.g. cluster_0)"
   type        = string
 }
 

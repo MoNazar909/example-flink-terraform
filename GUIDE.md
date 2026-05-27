@@ -28,14 +28,30 @@ Before filling in any `terraform.tfvars` file, gather the following from the Con
 
 ### 2. Bootstrap Cloud API Key
 
-Create one API key with broad scope — Terraform uses this to create service accounts and all other resources.
+Terraform needs one credential to bootstrap — it uses this to create all other service accounts, role bindings, and API keys. This must be created manually once, using a **dedicated service account** (not your personal user account), so it isn't tied to any individual.
 
-1. Go to **Administration → Cloud API Keys → Add key**
-2. Choose **Org Admin** scope (or Environment Admin)
-3. Save the **Key** and **Secret**
-4. Variables: `confluent_cloud_api_key` / `confluent_cloud_api_secret`
+**Step 1 — Create the service account:**
+1. Go to **hamburger menu (≡) → Accounts & access → Service accounts**
+2. Click **+ Add service account**
+3. Name it `terraform-bootstrap`, add a description like "Terraform will use this key to create resources"
+4. Click **Create**
 
-> All other credentials (Kafka, Schema Registry, Flink) are created automatically by Terraform in Stage 1 via service accounts. You do not need to create them manually.
+**Step 2 — Assign it admin access:**
+1. Go to **hamburger menu (≡) → Accounts & access → Roles**
+2. Find `terraform-bootstrap` and assign it the **OrganizationAdmin** role
+
+**Step 3 — Create its API key:**
+1. Go to **hamburger menu (≡) → Cloud API keys → + Add API key**
+2. Select **Service account** → choose `terraform-bootstrap`
+3. Set key scope to **Global** (this allows the key to talk to the Cloud management API)
+4. Click **Create API key** — copy the **Key** and **Secret** immediately (the secret is shown once)
+5. Variables: `confluent_cloud_api_key` / `confluent_cloud_api_secret`
+
+> **Why a service account instead of your user account?** A personal user API key stops working if you leave the org. A service account key is permanent and not tied to any individual — the standard pattern for CI/CD and Terraform.
+
+> **Why Global scope?** The scope controls which API surface the key can reach. Global means the Confluent Cloud management API — what Terraform uses to create environments, clusters, service accounts, and role bindings. The key's actual permissions are still limited to what the OrganizationAdmin role allows.
+
+> All other credentials (Kafka, Schema Registry, Flink) are created automatically by Terraform in Stage 1. You do not need to create them manually.
 
 ### 3. Flink Credentials (Stage 2 only — fill after Stage 1 runs)
 

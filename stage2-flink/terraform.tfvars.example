@@ -10,6 +10,8 @@ confluent_cloud_api_secret = ""
 environment_id   = ""   # env-xxxxxx
 organization_id  = ""   # UUID from org settings
 kafka_cluster_id = ""   # lkc-xxxxxx
+flink_catalog    = ""   # top-right catalog dropdown in Flink SQL editor (e.g. default)
+flink_database   = ""   # top-right database dropdown in Flink SQL editor (Kafka cluster display name, e.g. cluster_0)
 
 # ============================================================
 # Flink Credentials

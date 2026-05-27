@@ -24,6 +24,7 @@ provider "confluent" {
   flink_principal_id    = var.flink_principal_id
 }
 
+
 # ============================================================
 # Step 0: Register the UDF function
 # Pre-requisite: Upload workday-data-conversion-udf-1.0.0-shaded.jar
@@ -55,8 +56,8 @@ resource "confluent_flink_statement" "register_udf" {
   EOT
 
   properties = {
-    "sql.current-catalog"  = var.environment_id
-    "sql.current-database" = var.kafka_cluster_id
+    "sql.current-catalog"  = var.flink_catalog
+    "sql.current-database" = var.flink_database
   }
 
   credentials {
@@ -154,8 +155,8 @@ resource "confluent_flink_statement" "flatten_eoi" {
   EOT
 
   properties = {
-    "sql.current-catalog"  = var.environment_id
-    "sql.current-database" = var.kafka_cluster_id
+    "sql.current-catalog"  = var.flink_catalog
+    "sql.current-database" = var.flink_database
   }
 
   credentials {
@@ -231,8 +232,8 @@ resource "confluent_flink_statement" "route_bentech" {
   EOT
 
   properties = {
-    "sql.current-catalog"  = var.environment_id
-    "sql.current-database" = var.kafka_cluster_id
+    "sql.current-catalog"  = var.flink_catalog
+    "sql.current-database" = var.flink_database
   }
 
   credentials {
@@ -315,8 +316,8 @@ resource "confluent_flink_statement" "transform_workday" {
   EOT
 
   properties = {
-    "sql.current-catalog"  = var.environment_id
-    "sql.current-database" = var.kafka_cluster_id
+    "sql.current-catalog"  = var.flink_catalog
+    "sql.current-database" = var.flink_database
   }
 
   credentials {

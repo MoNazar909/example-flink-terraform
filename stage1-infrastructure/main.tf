@@ -79,6 +79,36 @@ resource "confluent_role_binding" "flink_runner_developer" {
   crn_pattern = data.confluent_environment.standard_poc.resource_name
 }
 
+resource "confluent_role_binding" "flink_runner_topic_read" {
+  principal   = "User:${confluent_service_account.flink_runner.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=*"
+}
+
+resource "confluent_role_binding" "flink_runner_topic_write" {
+  principal   = "User:${confluent_service_account.flink_runner.id}"
+  role_name   = "DeveloperWrite"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=*"
+}
+
+resource "confluent_role_binding" "flink_runner_sr_read" {
+  principal   = "User:${confluent_service_account.flink_runner.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=*"
+}
+
+resource "confluent_role_binding" "flink_runner_transactional_id" {
+  principal   = "User:${confluent_service_account.flink_runner.id}"
+  role_name   = "DeveloperWrite"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/transactional-id=*"
+}
+
+resource "confluent_role_binding" "flink_runner_consumer_group" {
+  principal   = "User:${confluent_service_account.flink_runner.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/group=*"
+}
+
 # ============================================================
 # API Keys
 # ============================================================

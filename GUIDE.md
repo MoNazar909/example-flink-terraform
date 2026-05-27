@@ -24,56 +24,33 @@ Before filling in any `terraform.tfvars` file, gather the following from the Con
 | Kafka Cluster ID | Environments → your env → Kafka Clusters → click cluster → URL contains `lkc-xxxxxx` | `kafka_cluster_id` |
 | Schema Registry ID | Environments → your env → Schema Registry → Settings → `lsrc-xxxxxx` | `schema_registry_id` |
 | Schema Registry URL | Same page → Endpoint URL (e.g. `https://psrc-xxxxx.us-east-2.aws.confluent.cloud`) | `schema_registry_url` |
-| Organization ID | Top-right hamburger → *Your Organization Name*→ Organization ID (UUID format) | `organization_id` (Stage 2 only) |
+| Organization ID | Top-right hamburger → *Your Organization Name* → Organization ID (UUID format) | `organization_id` (Stage 2 only) |
 
-### 2. API Keys
+### 2. Bootstrap Cloud API Key
 
-You need three sets of API keys. Create them under **Data Integration → API Keys** (or within each resource's settings page).
+Create one API key with broad scope — Terraform uses this to create service accounts and all other resources.
 
-#### Cloud API Key (resource management)
 1. Go to **Administration → Cloud API Keys → Add key**
-2. Choose **Global access** (or scope to the environment)
+2. Choose **Org Admin** scope (or Environment Admin)
 3. Save the **Key** and **Secret**
 4. Variables: `confluent_cloud_api_key` / `confluent_cloud_api_secret`
 
-#### Kafka API Key (topic access)
-1. Go to **Environments → your env → your Kafka cluster → API Keys → Add key**
-2. Save the **Key** and **Secret**
-3. Variables: `kafka_api_key` / `kafka_api_secret`
+> All other credentials (Kafka, Schema Registry, Flink) are created automatically by Terraform in Stage 1 via service accounts. You do not need to create them manually.
 
-#### Schema Registry API Key
-1. Go to **Environments → your env → Schema Registry → API Keys → Add key**
-2. Save the **Key** and **Secret**
-3. Variables: `schema_registry_api_key` / `schema_registry_api_secret`
+### 3. Flink Credentials (Stage 2 only — fill after Stage 1 runs)
 
-### 3. Flink Credentials (Stage 2 only — after Stage 1 runs)
+After Stage 1 applies, run `terraform output` to get the service account credentials for Stage 2:
 
-#### Flink Compute Pool ID
-After Stage 1 runs, get this from its output:
 ```
-terraform output flink_compute_pool_id
+terraform output flink_compute_pool_id       → flink_compute_pool_id
+terraform output flink_runner_sa_id          → flink_principal_id
+terraform output flink_runner_api_key_id     → flink_api_key
+terraform output -raw flink_runner_api_key_secret → flink_api_secret
 ```
-Or in the UI: **Environments → your env → Flink → Compute Pools → click pool → URL contains `lfcp-xxxxxx`**
 
-Variable: `flink_compute_pool_id`
-
-#### Flink REST Endpoint
-Go to **Environments → your env → Flink → Endpoints*
-The endpoint looks like: `https://flink.us-east-2.aws.confluent.cloud`
-
-Variable: `flink_rest_endpoint`
-
-#### Flink API Key
-1. Go to **Environments → your env → Flink → API Keys → Add key**
-2. Save the **Key** and **Secret**
-3. Variables: `flink_api_key` / `flink_api_secret`
-
-#### Flink Principal ID
-This is the user or service account that runs the Flink SQL statements.
-1. Go to **Administration → Users** (or **Service Accounts**)
-2. Click your user/service account → the ID in the URL is `u-xxxxxxx`
-
-Variable: `flink_principal_id`
+Also collect the Flink REST endpoint from the UI:
+- **Environments → your env → Flink → Endpoints**
+- Example: `https://flink.us-east-2.aws.confluent.cloud`
 
 ---
 
@@ -82,23 +59,14 @@ Variable: `flink_principal_id`
 ### Fill in `stage1-infrastructure/terraform.tfvars`
 
 ```hcl
-# Cloud API credentials
 confluent_cloud_api_key    = "<your-cloud-api-key>"
 confluent_cloud_api_secret = "<your-cloud-api-secret>"
 
-# Environment and cluster
 environment_id   = "<env-xxxxxx>"
 kafka_cluster_id = "<lkc-xxxxxx>"
 
-# Kafka cluster credentials
-kafka_api_key    = "<your-kafka-api-key>"
-kafka_api_secret = "<your-kafka-api-secret>"
-
-# Schema Registry
-schema_registry_id         = "<lsrc-xxxxxx>"
-schema_registry_url        = "https://psrc-xxxxx.<region>.aws.confluent.cloud"
-schema_registry_api_key    = "<your-sr-api-key>"
-schema_registry_api_secret = "<your-sr-api-secret>"
+schema_registry_id  = "<lsrc-xxxxxx>"
+schema_registry_url = "https://psrc-xxxxx.<region>.aws.confluent.cloud"
 ```
 
 ### Run Stage 1
@@ -111,31 +79,34 @@ terraform apply
 ```
 
 **What gets created:**
-- 6 Kafka topics (`standard.eda.hcmdata.*`)
-- 6 Avro schemas in Schema Registry
+- 2 service accounts (`standard-poc-terraform-manager`, `standard-poc-flink-runner`)
+- 3 role bindings (CloudClusterAdmin, ResourceOwner on SR, FlinkDeveloper)
+- 4 API keys (Kafka + SR for terraform-manager; Kafka + Flink for flink-runner)
+- 11 Kafka topics (`standard.eda.bentechdata.*`)
+- 22 Avro schemas in Schema Registry (value + key for each topic)
 - 1 Flink compute pool (`standard-insurance-flink-poc`, AWS us-east-2, 10 CFU max)
 
 ### Capture Stage 1 Outputs
 
-After apply completes, note these for Stage 2:
-
 ```bash
 terraform output flink_compute_pool_id
+terraform output flink_runner_sa_id
+terraform output flink_runner_api_key_id
+terraform output -raw flink_runner_api_key_secret
 ```
 
 ---
 
 ## Upload the UDF JAR (Required Before Stage 2)
 
-The Flink SQL job calls a Java UDF for Workday transformation. The JAR must exist in Confluent Cloud Artifacts **before** Stage 2 runs, because Stage 2 references it by artifact ID.
+The Flink SQL job calls a Java UDF for Workday transformation. The JAR must exist in Confluent Cloud Artifacts **before** Stage 2 runs.
 
 ### Upload Steps
 
 1. Go to **confluent.cloud → Environments → your env → Flink → Artifacts**
 2. Click **Upload artifact**
 3. Upload `workday-data-conversion-udf-1.0.0-shaded.jar`
-4. After upload, the UI will show an artifact ID in the format `cfa-xxxxxx`
-5. Copy that artifact ID
+4. After upload, copy the artifact ID in the format `cfa-xxxxxx`
 
 ### Update Stage 2 Config
 
@@ -152,29 +123,19 @@ udf_artifact_id = "<cfa-xxxxxx>"
 ### Fill in `stage2-flink/terraform.tfvars`
 
 ```hcl
-# Cloud API credentials (same as Stage 1)
 confluent_cloud_api_key    = "<your-cloud-api-key>"
 confluent_cloud_api_secret = "<your-cloud-api-secret>"
 
-# Environment and cluster
 environment_id   = "<env-xxxxxx>"
 kafka_cluster_id = "<lkc-xxxxxx>"
+organization_id  = "<xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx>"
 
-# Organization ID (UUID, from org settings)
-organization_id = "<xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx>"
+flink_rest_endpoint   = "https://flink.<region>.aws.confluent.cloud"
+flink_api_key         = "<from: terraform output flink_runner_api_key_id>"
+flink_api_secret      = "<from: terraform output -raw flink_runner_api_key_secret>"
+flink_principal_id    = "<from: terraform output flink_runner_sa_id>"
+flink_compute_pool_id = "<from: terraform output flink_compute_pool_id>"
 
-# Flink compute pool (from Stage 1 output)
-flink_compute_pool_id = "<lfcp-xxxxxx>"
-
-# Flink principal (user or service account running the statements)
-flink_principal_id = "<u-xxxxxxx>"
-
-# Flink API credentials
-flink_rest_endpoint = "https://flink.<region>.aws.confluent.cloud"
-flink_api_key       = "<your-flink-api-key>"
-flink_api_secret    = "<your-flink-api-secret>"
-
-# UDF artifact (from upload step above)
 udf_artifact_id = "<cfa-xxxxxx>"
 ```
 
@@ -192,8 +153,8 @@ terraform apply
 | Statement | What it does |
 |---|---|
 | `register_udf` | Registers the Java UDF function `workdayeoidataconversion` |
-| `flatten_eoi` | Reads source EOI events, flattens nested Avro records into a JSON string, writes to common topic |
-| `route_hcm` | Reads common topic, fans out to per-HCM routing topics (`flink.workday`, `flink.hcm2`) based on `target_HCM` field |
+| `flatten_eoi` | Reads source EOI events, flattens nested Avro records into a JSON string, writes to common topic. DLQ → `eoi.dlq` |
+| `route_bentech` | Reads common topic, routes to per-system topics (`flink.workday`, `flink.bentech2`) based on `target_BENTECH` field. DLQ → `flink.common.dlq` |
 | `transform_workday` | Calls the UDF on each Workday event; successes go to `workday` sink topic, failures go to `flink.workday.dlq` |
 
 ---
@@ -203,32 +164,34 @@ terraform apply
 ```
 Upstream EOI System
         ↓
-  [standard.eda.hcmdata.eoi]  ← produce Avro events here
+  [standard.eda.bentechdata.eoi]  ← produce Avro events here
         ↓  (Flink: flatten_eoi)
-  [standard.eda.hcmdata.flink.common]
-        ↓  (Flink: route_hcm)
-        ├──→ [standard.eda.hcmdata.flink.workday]
-        │           ↓  (Flink: transform_workday + UDF)
-        │           ├──→ SUCCESS → [standard.eda.hcmdata.workday]  → HTTP Sink Connector → Workday SOAP API
-        │           └──→ ERROR   → [standard.eda.hcmdata.flink.workday.dlq]
-        └──→ [standard.eda.hcmdata.flink.hcm2]  (future: add transform statement for HCM2)
+        ├──→ SUCCESS → [standard.eda.bentechdata.flink.common]
+        └──→ DLQ     → [standard.eda.bentechdata.eoi.dlq]
+                ↓  (Flink: route_bentech)
+                ├──→ Workday  → [standard.eda.bentechdata.flink.workday]
+                │                    ↓  (Flink: transform_workday + UDF)
+                │                    ├──→ SUCCESS → [standard.eda.bentechdata.workday] → HTTP Sink Connector → Workday SOAP API
+                │                    └──→ DLQ     → [standard.eda.bentechdata.flink.workday.dlq]
+                ├──→ BENTECH2 → [standard.eda.bentechdata.flink.bentech2]
+                └──→ DLQ     → [standard.eda.bentechdata.flink.common.dlq]
 ```
 
 ---
 
 ## Kafka Key Format
 
-Every message produced to `standard.eda.hcmdata.eoi` must use the following key format:
+Every message produced to `standard.eda.bentechdata.eoi` must use the following key format:
 
 ```
-{GroupId}-{WorkerId}-{Target_HCM}-{EventType}
+{GroupId}-{WorkerId}-{Target_BENTECH}-{EventType}
 ```
 
 | Field | Source in payload |
 |---|---|
 | `GroupId` | `event_MetaData.group_id` |
 | `WorkerId` | `event_Data.worker_id` |
-| `Target_HCM` | `event_MetaData.target_hcm` |
+| `Target_BENTECH` | `event_MetaData.target_bentech` |
 | `EventType` | `event_MetaData.event_type` |
 
 **Example:** `WMT-12345-100319TS-Workday-BenefitsEOI`
@@ -239,8 +202,9 @@ Every message produced to `standard.eda.hcmdata.eoi` must use the following key 
 
 After both stages apply successfully, confirm in the Confluent Cloud UI:
 
-- **Topics:** 6 topics exist under your Kafka cluster
-- **Schema Registry:** 6 subjects registered
+- **Topics:** 11 topics exist under your Kafka cluster
+- **Schema Registry:** 22 subjects registered
+- **Service Accounts:** `standard-poc-terraform-manager` and `standard-poc-flink-runner` visible
 - **Flink:** Compute pool is `Running`; all 4 statements are in `Completed` or `Running` state
 - **Artifacts:** UDF JAR appears under Flink → Artifacts
 
@@ -264,4 +228,4 @@ Note: Manually delete the UDF artifact from the Confluent Cloud UI — it is not
 - `terraform.tfvars` files contain credentials and are excluded from git via `.gitignore` — never commit them.
 - `terraform.tfstate` files are also excluded — store state remotely (e.g. Terraform Cloud or S3) for team environments.
 - The HTTP Sink Connector (to deliver `workday` topic events to the Workday SOAP API) is not deployed by Terraform and must be configured separately in Confluent Cloud.
-- The routing statement (`route_hcm`) can be extended to support additional HCM systems by adding `INSERT INTO` blocks following the same pattern as the Workday and HCM2 entries.
+- The routing statement (`route_bentech`) can be extended to support additional systems by adding `INSERT INTO` blocks following the same pattern as the Workday and BENTECH2 entries.

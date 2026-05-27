@@ -15,9 +15,9 @@ kafka_cluster_id = ""   # lkc-xxxxxx
 # Flink Credentials
 # ============================================================
 flink_rest_endpoint   = ""   # https://flink.<region>.aws.confluent.cloud
-flink_api_key         = ""
-flink_api_secret      = ""
-flink_principal_id    = ""   # u-xxxxxxx
+flink_api_key         = ""   # from: terraform output flink_runner_api_key_id after Stage 1
+flink_api_secret      = ""   # from: terraform output flink_runner_api_key_secret after Stage 1
+flink_principal_id    = ""   # sa-xxxxxxx  (from: terraform output flink_runner_sa_id after Stage 1)
 flink_compute_pool_id = ""   # lfcp-xxxxxx  (from: terraform output flink_compute_pool_id after Stage 1)
 
 # ============================================================

@@ -16,7 +16,7 @@
       "doc": "Serialized JSON string describing the exception; populated only on DLQ messages"
     },
     {
-      "name": "target_HCM",
+      "name": "target_BENTECH",
       "type": ["null", "string"],
       "default": null
     },

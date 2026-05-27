@@ -6,7 +6,7 @@
     {
       "name": "kafka_key",
       "type": "string",
-      "doc": "Kafka message key: GroupId-WorkerId-Target_HCM-EventType"
+      "doc": "Kafka message key: GroupId-WorkerId-Target_BENTECH-EventType"
     }
   ]
 }

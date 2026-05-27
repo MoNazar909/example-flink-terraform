@@ -31,6 +31,134 @@ data "confluent_kafka_cluster" "standard_poc" {
   }
 }
 
+data "confluent_schema_registry_cluster" "standard_poc" {
+  id = var.schema_registry_id
+  environment {
+    id = var.environment_id
+  }
+}
+
+data "confluent_flink_region" "standard_poc" {
+  cloud  = "AWS"
+  region = "us-east-2"
+}
+
+# ============================================================
+# Service Accounts
+# ============================================================
+
+resource "confluent_service_account" "terraform_manager" {
+  display_name = "standard-poc-terraform-manager"
+  description  = "Creates and manages Kafka topics and Schema Registry schemas"
+}
+
+resource "confluent_service_account" "flink_runner" {
+  display_name = "standard-poc-flink-runner"
+  description  = "Submits Flink SQL statements and reads/writes Kafka topics"
+}
+
+# ============================================================
+# Role Bindings
+# ============================================================
+
+resource "confluent_role_binding" "terraform_manager_kafka_admin" {
+  principal   = "User:${confluent_service_account.terraform_manager.id}"
+  role_name   = "CloudClusterAdmin"
+  crn_pattern = data.confluent_kafka_cluster.standard_poc.rbac_crn
+}
+
+resource "confluent_role_binding" "terraform_manager_sr_owner" {
+  principal   = "User:${confluent_service_account.terraform_manager.id}"
+  role_name   = "ResourceOwner"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=*"
+}
+
+resource "confluent_role_binding" "flink_runner_developer" {
+  principal   = "User:${confluent_service_account.flink_runner.id}"
+  role_name   = "FlinkDeveloper"
+  crn_pattern = data.confluent_environment.standard_poc.resource_name
+}
+
+# ============================================================
+# API Keys
+# ============================================================
+
+resource "confluent_api_key" "terraform_kafka_key" {
+  display_name = "standard-poc-terraform-kafka-key"
+  description  = "Kafka API key used by Terraform to manage topics"
+  owner {
+    id          = confluent_service_account.terraform_manager.id
+    api_version = confluent_service_account.terraform_manager.api_version
+    kind        = confluent_service_account.terraform_manager.kind
+  }
+  managed_resource {
+    id          = data.confluent_kafka_cluster.standard_poc.id
+    api_version = data.confluent_kafka_cluster.standard_poc.api_version
+    kind        = data.confluent_kafka_cluster.standard_poc.kind
+    environment {
+      id = var.environment_id
+    }
+  }
+  depends_on = [confluent_role_binding.terraform_manager_kafka_admin]
+}
+
+resource "confluent_api_key" "terraform_sr_key" {
+  display_name = "standard-poc-terraform-sr-key"
+  description  = "Schema Registry API key used by Terraform to register schemas"
+  owner {
+    id          = confluent_service_account.terraform_manager.id
+    api_version = confluent_service_account.terraform_manager.api_version
+    kind        = confluent_service_account.terraform_manager.kind
+  }
+  managed_resource {
+    id          = data.confluent_schema_registry_cluster.standard_poc.id
+    api_version = data.confluent_schema_registry_cluster.standard_poc.api_version
+    kind        = data.confluent_schema_registry_cluster.standard_poc.kind
+    environment {
+      id = var.environment_id
+    }
+  }
+  depends_on = [confluent_role_binding.terraform_manager_sr_owner]
+}
+
+resource "confluent_api_key" "flink_kafka_key" {
+  display_name = "standard-poc-flink-kafka-key"
+  description  = "Kafka API key used by the flink-runner SA to read/write topics"
+  owner {
+    id          = confluent_service_account.flink_runner.id
+    api_version = confluent_service_account.flink_runner.api_version
+    kind        = confluent_service_account.flink_runner.kind
+  }
+  managed_resource {
+    id          = data.confluent_kafka_cluster.standard_poc.id
+    api_version = data.confluent_kafka_cluster.standard_poc.api_version
+    kind        = data.confluent_kafka_cluster.standard_poc.kind
+    environment {
+      id = var.environment_id
+    }
+  }
+  depends_on = [confluent_role_binding.flink_runner_developer]
+}
+
+resource "confluent_api_key" "flink_key" {
+  display_name = "standard-poc-flink-key"
+  description  = "Flink API key used by the flink-runner SA to submit statements"
+  owner {
+    id          = confluent_service_account.flink_runner.id
+    api_version = confluent_service_account.flink_runner.api_version
+    kind        = confluent_service_account.flink_runner.kind
+  }
+  managed_resource {
+    id          = data.confluent_flink_region.standard_poc.id
+    api_version = data.confluent_flink_region.standard_poc.api_version
+    kind        = data.confluent_flink_region.standard_poc.kind
+    environment {
+      id = var.environment_id
+    }
+  }
+  depends_on = [confluent_role_binding.flink_runner_developer]
+}
+
 # ============================================================
 # Kafka Topics
 # ============================================================
@@ -39,7 +167,7 @@ resource "confluent_kafka_topic" "eoi_source" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.eoi"
+  topic_name       = "standard.eda.bentechdata.eoi"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -48,8 +176,8 @@ resource "confluent_kafka_topic" "eoi_source" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -57,7 +185,7 @@ resource "confluent_kafka_topic" "flink_common" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.common"
+  topic_name       = "standard.eda.bentechdata.flink.common"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -66,8 +194,8 @@ resource "confluent_kafka_topic" "flink_common" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -75,7 +203,7 @@ resource "confluent_kafka_topic" "eoi_dlq" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.eoi.dlq"
+  topic_name       = "standard.eda.bentechdata.eoi.dlq"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -84,8 +212,8 @@ resource "confluent_kafka_topic" "eoi_dlq" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -93,7 +221,7 @@ resource "confluent_kafka_topic" "flink_workday" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.workday"
+  topic_name       = "standard.eda.bentechdata.flink.workday"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -102,8 +230,8 @@ resource "confluent_kafka_topic" "flink_workday" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -111,7 +239,7 @@ resource "confluent_kafka_topic" "flink_workday_dlq" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.workday.dlq"
+  topic_name       = "standard.eda.bentechdata.flink.workday.dlq"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -120,8 +248,8 @@ resource "confluent_kafka_topic" "flink_workday_dlq" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -129,7 +257,7 @@ resource "confluent_kafka_topic" "flink_common_dlq" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.common.dlq"
+  topic_name       = "standard.eda.bentechdata.flink.common.dlq"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -138,8 +266,8 @@ resource "confluent_kafka_topic" "flink_common_dlq" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -147,7 +275,7 @@ resource "confluent_kafka_topic" "workday_sink" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.workday"
+  topic_name       = "standard.eda.bentechdata.workday"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -156,16 +284,16 @@ resource "confluent_kafka_topic" "workday_sink" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
-resource "confluent_kafka_topic" "flink_hcm2" {
+resource "confluent_kafka_topic" "flink_bentech2" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.flink.hcm2"
+  topic_name       = "standard.eda.bentechdata.flink.bentech2"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -174,8 +302,8 @@ resource "confluent_kafka_topic" "flink_hcm2" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -193,8 +321,8 @@ resource "confluent_schema" "eoi_source_value" {
   schema        = file("${path.module}/schemas/eoi_source.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.eoi_source]
@@ -210,8 +338,8 @@ resource "confluent_schema" "flink_common_value" {
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_common]
@@ -227,8 +355,8 @@ resource "confluent_schema" "eoi_dlq_value" {
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.eoi_dlq]
@@ -244,8 +372,8 @@ resource "confluent_schema" "flink_workday_value" {
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_workday]
@@ -261,8 +389,8 @@ resource "confluent_schema" "flink_workday_dlq_value" {
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
@@ -278,8 +406,8 @@ resource "confluent_schema" "flink_common_dlq_value" {
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_common_dlq]
@@ -292,31 +420,31 @@ resource "confluent_schema" "workday_sink_value" {
   rest_endpoint = var.schema_registry_url
   subject_name  = "${confluent_kafka_topic.workday_sink.topic_name}-value"
   format        = "AVRO"
-  schema        = file("${path.module}/schemas/hcm_sink_workday.avsc")
+  schema        = file("${path.module}/schemas/bentech_sink_workday.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_sink]
 }
 
-resource "confluent_schema" "flink_hcm2_value" {
+resource "confluent_schema" "flink_bentech2_value" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
   rest_endpoint = var.schema_registry_url
-  subject_name  = "${confluent_kafka_topic.flink_hcm2.topic_name}-value"
+  subject_name  = "${confluent_kafka_topic.flink_bentech2.topic_name}-value"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
-  depends_on = [confluent_kafka_topic.flink_hcm2]
+  depends_on = [confluent_kafka_topic.flink_bentech2]
 }
 
 # ============================================================
@@ -336,8 +464,8 @@ resource "confluent_schema" "eoi_source_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.eoi_source]
@@ -353,8 +481,8 @@ resource "confluent_schema" "flink_common_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_common]
@@ -370,8 +498,8 @@ resource "confluent_schema" "eoi_dlq_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.eoi_dlq]
@@ -387,8 +515,8 @@ resource "confluent_schema" "flink_workday_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_workday]
@@ -404,8 +532,8 @@ resource "confluent_schema" "flink_workday_dlq_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
@@ -421,8 +549,8 @@ resource "confluent_schema" "flink_common_dlq_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.flink_common_dlq]
@@ -438,28 +566,28 @@ resource "confluent_schema" "workday_sink_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_sink]
 }
 
-resource "confluent_schema" "flink_hcm2_key" {
+resource "confluent_schema" "flink_bentech2_key" {
   schema_registry_cluster {
     id = var.schema_registry_id
   }
   rest_endpoint = var.schema_registry_url
-  subject_name  = "${confluent_kafka_topic.flink_hcm2.topic_name}-key"
+  subject_name  = "${confluent_kafka_topic.flink_bentech2.topic_name}-key"
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
-  depends_on = [confluent_kafka_topic.flink_hcm2]
+  depends_on = [confluent_kafka_topic.flink_bentech2]
 }
 
 # ============================================================
@@ -472,7 +600,7 @@ resource "confluent_kafka_topic" "workday_response" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.workday.response"
+  topic_name       = "standard.eda.bentechdata.workday.response"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -481,8 +609,8 @@ resource "confluent_kafka_topic" "workday_response" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -490,7 +618,7 @@ resource "confluent_kafka_topic" "workday_connector_dlq" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.workday.dlq"
+  topic_name       = "standard.eda.bentechdata.workday.dlq"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -499,8 +627,8 @@ resource "confluent_kafka_topic" "workday_connector_dlq" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -508,7 +636,7 @@ resource "confluent_kafka_topic" "workday_error" {
   kafka_cluster {
     id = data.confluent_kafka_cluster.standard_poc.id
   }
-  topic_name       = "standard.eda.hcmdata.workday.error"
+  topic_name       = "standard.eda.bentechdata.workday.error"
   partitions_count = 6
   rest_endpoint    = data.confluent_kafka_cluster.standard_poc.rest_endpoint
 
@@ -517,8 +645,8 @@ resource "confluent_kafka_topic" "workday_error" {
   }
 
   credentials {
-    key    = var.kafka_api_key
-    secret = var.kafka_api_secret
+    key    = confluent_api_key.terraform_kafka_key.id
+    secret = confluent_api_key.terraform_kafka_key.secret
   }
 }
 
@@ -531,11 +659,11 @@ resource "confluent_schema" "workday_response_value" {
   rest_endpoint = var.schema_registry_url
   subject_name  = "${confluent_kafka_topic.workday_response.topic_name}-value"
   format        = "AVRO"
-  schema        = file("${path.module}/schemas/hcm_sink_response.avsc")
+  schema        = file("${path.module}/schemas/bentech_sink_response.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_response]
@@ -548,11 +676,11 @@ resource "confluent_schema" "workday_connector_dlq_value" {
   rest_endpoint = var.schema_registry_url
   subject_name  = "${confluent_kafka_topic.workday_connector_dlq.topic_name}-value"
   format        = "AVRO"
-  schema        = file("${path.module}/schemas/hcm_sink_response.avsc")
+  schema        = file("${path.module}/schemas/bentech_sink_response.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_connector_dlq]
@@ -565,11 +693,11 @@ resource "confluent_schema" "workday_error_value" {
   rest_endpoint = var.schema_registry_url
   subject_name  = "${confluent_kafka_topic.workday_error.topic_name}-value"
   format        = "AVRO"
-  schema        = file("${path.module}/schemas/hcm_sink_response.avsc")
+  schema        = file("${path.module}/schemas/bentech_sink_response.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_error]
@@ -587,8 +715,8 @@ resource "confluent_schema" "workday_response_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_response]
@@ -604,8 +732,8 @@ resource "confluent_schema" "workday_connector_dlq_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_connector_dlq]
@@ -621,8 +749,8 @@ resource "confluent_schema" "workday_error_key" {
   schema        = file("${path.module}/schemas/kafka_key.avsc")
 
   credentials {
-    key    = var.schema_registry_api_key
-    secret = var.schema_registry_api_secret
+    key    = confluent_api_key.terraform_sr_key.id
+    secret = confluent_api_key.terraform_sr_key.secret
   }
 
   depends_on = [confluent_kafka_topic.workday_error]

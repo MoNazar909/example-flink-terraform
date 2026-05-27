@@ -5,7 +5,7 @@
       "message_version": {"string": "v42.0"},
       "correlation_id": {"string": "abc123-xyz"},
       "group_id": {"string": "WMT-12345"},
-      "target_hcm": {"string": "Workday"},
+      "target_bentech": {"string": "Workday"},
       "target_api_url": {"string": "https://workday.example.com/api/v42.0"},
       "target_api_token_url": {"string": "https://workday.example.com/token/v42.0"},
       "event_type": {"string": "BenefitsEOI"},

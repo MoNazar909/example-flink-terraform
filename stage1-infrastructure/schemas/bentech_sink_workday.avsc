@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "HcmSinkWorkdayKafkaPublish",
+  "name": "BentechSinkWorkdayKafkaPublish",
   "namespace": "com.standardinsurance.eoi",
   "fields": [
     {
@@ -16,13 +16,13 @@
       "doc": "Serialized JSON string describing the exception; populated only on DLQ/error messages"
     },
     {
-      "name": "target_HCM_payload",
+      "name": "target_BENTECH_payload",
       "type": ["null", "string"],
       "default": null,
-      "doc": "HCM-specific request payload (e.g. Workday SOAP XML) serialized as a string"
+      "doc": "BENTECH-specific request payload (e.g. Workday SOAP XML) serialized as a string"
     },
     {
-      "name": "target_HCM",
+      "name": "target_BENTECH",
       "type": ["null", "string"],
       "default": null
     },

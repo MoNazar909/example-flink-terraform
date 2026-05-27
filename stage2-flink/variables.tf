@@ -60,7 +60,7 @@ variable "flink_compute_pool_id" {
 }
 
 variable "flink_principal_id" {
-  description = "Principal ID for Flink statements — your Confluent Cloud user ID (e.g. u-xxxxxx)"
+  description = "Service account ID for Flink statements — from stage1 output flink_runner_sa_id (e.g. sa-xxxxxx)"
   type        = string
 }
 

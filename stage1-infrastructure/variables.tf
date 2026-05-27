@@ -29,23 +29,7 @@ variable "kafka_cluster_id" {
 }
 
 # ============================================================
-# Kafka Credentials
-# ============================================================
-
-variable "kafka_api_key" {
-  description = "Kafka cluster API key"
-  type        = string
-  sensitive   = true
-}
-
-variable "kafka_api_secret" {
-  description = "Kafka cluster API secret"
-  type        = string
-  sensitive   = true
-}
-
-# ============================================================
-# Schema Registry Credentials
+# Schema Registry
 # ============================================================
 
 variable "schema_registry_id" {
@@ -56,16 +40,4 @@ variable "schema_registry_id" {
 variable "schema_registry_url" {
   description = "Schema Registry REST endpoint URL"
   type        = string
-}
-
-variable "schema_registry_api_key" {
-  description = "Schema Registry API key"
-  type        = string
-  sensitive   = true
-}
-
-variable "schema_registry_api_secret" {
-  description = "Schema Registry API secret"
-  type        = string
-  sensitive   = true
 }

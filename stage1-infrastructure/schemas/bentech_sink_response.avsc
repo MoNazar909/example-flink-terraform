@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "name": "HcmSinkResponse",
+  "name": "BentechSinkResponse",
   "namespace": "com.standardinsurance.eoi",
   "fields": [
     { "name": "http_status_code",    "type": ["null", "string"], "default": null },

@@ -67,9 +67,9 @@ resource "confluent_flink_statement" "register_udf" {
 
 # ============================================================
 # Step 1: Flatten EOI source messages into common topic
-# Reads from: standard.eda.hcmdata.eoi
-# Success  →  standard.eda.hcmdata.flink.common
-# DLQ      →  standard.eda.hcmdata.eoi.dlq
+# Reads from: standard.eda.bentechdata.eoi
+# Success  →  standard.eda.bentechdata.flink.common
+# DLQ      →  standard.eda.bentechdata.eoi.dlq
 #             (when event_MetaData or event_Data is null)
 #
 # kafka_key is built here from payload fields and carried
@@ -99,16 +99,16 @@ resource "confluent_flink_statement" "flatten_eoi" {
     BEGIN
 
       -- Success path: both metadata and data are present
-      INSERT INTO `standard.eda.hcmdata.flink.common`
-      (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
+      INSERT INTO `standard.eda.bentechdata.flink.common`
+      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
       SELECT
-        CONCAT(event_MetaData.group_id, '-', event_Data.worker_id, '-', event_MetaData.target_hcm, '-', event_MetaData.event_type),
+        CONCAT(event_MetaData.group_id, '-', event_Data.worker_id, '-', event_MetaData.target_bentech, '-', event_MetaData.event_type),
         JSON_OBJECT(
           KEY 'msg_source'              VALUE event_MetaData.msg_source,
           KEY 'message_version'         VALUE event_MetaData.message_version,
           KEY 'correlation_id'          VALUE event_MetaData.correlation_id,
           KEY 'group_id'                VALUE event_MetaData.group_id,
-          KEY 'target_hcm'              VALUE event_MetaData.target_hcm,
+          KEY 'target_bentech'              VALUE event_MetaData.target_bentech,
           KEY 'target_api_url'          VALUE event_MetaData.target_api_url,
           KEY 'target_api_token_url'    VALUE event_MetaData.target_api_token_url,
           KEY 'event_type'              VALUE event_MetaData.event_type,
@@ -124,30 +124,30 @@ resource "confluent_flink_statement" "flatten_eoi" {
           KEY 'eoi_decision_date'       VALUE event_Data.eoi_decision_date
         ),
         CAST(NULL AS STRING),
-        event_MetaData.target_hcm,
+        event_MetaData.target_bentech,
         event_MetaData.group_id,
         event_MetaData.event_type,
         event_MetaData.correlation_id
-      FROM `standard.eda.hcmdata.eoi`
+      FROM `standard.eda.bentechdata.eoi`
       WHERE event_MetaData IS NOT NULL AND event_Data IS NOT NULL;
 
       -- DLQ path: event_MetaData or event_Data is null
-      INSERT INTO `standard.eda.hcmdata.eoi.dlq`
-      (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
+      INSERT INTO `standard.eda.bentechdata.eoi.dlq`
+      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
       SELECT
         CONCAT(
           COALESCE(event_MetaData.group_id, 'unknown'), '-',
           COALESCE(event_Data.worker_id,    'unknown'), '-',
-          COALESCE(event_MetaData.target_hcm,  'unknown'), '-',
+          COALESCE(event_MetaData.target_bentech,  'unknown'), '-',
           COALESCE(event_MetaData.event_type,  'unknown')
         ),
         CAST(NULL AS STRING),
         'flatten_eoi: event_MetaData or event_Data is null',
-        event_MetaData.target_hcm,
+        event_MetaData.target_bentech,
         event_MetaData.group_id,
         event_MetaData.event_type,
         event_MetaData.correlation_id
-      FROM `standard.eda.hcmdata.eoi`
+      FROM `standard.eda.bentechdata.eoi`
       WHERE event_MetaData IS NULL OR event_Data IS NULL;
 
     END;
@@ -167,15 +167,15 @@ resource "confluent_flink_statement" "flatten_eoi" {
 }
 
 # ============================================================
-# Step 2: Route messages from common topic to HCM-specific topics
-# Reads from: standard.eda.hcmdata.flink.common
-# Workday  →  standard.eda.hcmdata.flink.workday
-# HCM2     →  standard.eda.hcmdata.flink.hcm2
-# DLQ      →  standard.eda.hcmdata.flink.common.dlq
-#             (when target_HCM does not match any known system)
+# Step 2: Route messages from common topic to BENTECH-specific topics
+# Reads from: standard.eda.bentechdata.flink.common
+# Workday  →  standard.eda.bentechdata.flink.workday
+# BENTECH2 →  standard.eda.bentechdata.flink.bentech2
+# DLQ      →  standard.eda.bentechdata.flink.common.dlq
+#             (when target_BENTECH does not match any known system)
 # ============================================================
 
-resource "confluent_flink_statement" "route_hcm" {
+resource "confluent_flink_statement" "route_bentech" {
   organization {
     id = var.organization_id
   }
@@ -189,43 +189,43 @@ resource "confluent_flink_statement" "route_hcm" {
     id = var.flink_principal_id
   }
 
-  statement_name = "std-ins-route-hcm"
+  statement_name = "std-ins-route-bentech"
 
   statement = <<-EOT
     EXECUTE STATEMENT SET
     BEGIN
 
       -- Workday routing
-      INSERT INTO `standard.eda.hcmdata.flink.workday`
-      (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
-      SELECT kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id
-      FROM `standard.eda.hcmdata.flink.common`
-      WHERE target_HCM = 'Workday';
+      INSERT INTO `standard.eda.bentechdata.flink.workday`
+      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
+      SELECT kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id
+      FROM `standard.eda.bentechdata.flink.common`
+      WHERE target_BENTECH = 'Workday';
 
-      -- HCM2 routing
-      INSERT INTO `standard.eda.hcmdata.flink.hcm2`
-      (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
-      SELECT kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id
-      FROM `standard.eda.hcmdata.flink.common`
-      WHERE target_HCM = 'HCM2';
+      -- BENTECH2 routing
+      INSERT INTO `standard.eda.bentechdata.flink.bentech2`
+      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
+      SELECT kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id
+      FROM `standard.eda.bentechdata.flink.common`
+      WHERE target_BENTECH = 'BENTECH2';
 
-      -- TODO: Add routing blocks here for additional HCM systems
+      -- TODO: Add routing blocks here for additional BENTECH systems
       -- Example:
-      -- INSERT INTO `standard.eda.hcmdata.flink.sap` (...) SELECT ... WHERE target_HCM = 'SAP';
+      -- INSERT INTO `standard.eda.bentechdata.flink.sap` (...) SELECT ... WHERE target_BENTECH = 'SAP';
 
-      -- DLQ: target_HCM does not match any configured system
-      INSERT INTO `standard.eda.hcmdata.flink.common.dlq`
-      (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
+      -- DLQ: target_BENTECH does not match any configured system
+      INSERT INTO `standard.eda.bentechdata.flink.common.dlq`
+      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
       SELECT
         kafka_key,
         flattened_event,
-        CONCAT('route_hcm: no routing rule for target_HCM=', COALESCE(target_HCM, 'null')),
-        target_HCM,
+        CONCAT('route_bentech: no routing rule for target_BENTECH=', COALESCE(target_BENTECH, 'null')),
+        target_BENTECH,
         group_id,
         event_type,
         correlation_id
-      FROM `standard.eda.hcmdata.flink.common`
-      WHERE target_HCM NOT IN ('Workday', 'HCM2') OR target_HCM IS NULL;
+      FROM `standard.eda.bentechdata.flink.common`
+      WHERE target_BENTECH NOT IN ('Workday', 'BENTECH2') OR target_BENTECH IS NULL;
 
     END;
   EOT
@@ -245,9 +245,9 @@ resource "confluent_flink_statement" "route_hcm" {
 
 # ============================================================
 # Step 3: Transform Workday messages to SOAP XML via UDF
-# Reads from: standard.eda.hcmdata.flink.workday
-# Success  →  standard.eda.hcmdata.workday (HTTP Sink Connector reads from here)
-# DLQ      →  standard.eda.hcmdata.flink.workday.dlq
+# Reads from: standard.eda.bentechdata.flink.workday
+# Success  →  standard.eda.bentechdata.workday (HTTP Sink Connector reads from here)
+# DLQ      →  standard.eda.bentechdata.flink.workday.dlq
 # ============================================================
 
 resource "confluent_flink_statement" "transform_workday" {
@@ -271,42 +271,42 @@ resource "confluent_flink_statement" "transform_workday" {
     BEGIN
 
       -- Success path: UDF returned a result with no exception
-      INSERT INTO `standard.eda.hcmdata.workday`
-      (kafka_key, flattened_event, exception, target_HCM_payload, target_HCM, group_id, event_type, correlation_id)
+      INSERT INTO `standard.eda.bentechdata.workday`
+      (kafka_key, flattened_event, exception, target_BENTECH_payload, target_BENTECH, group_id, event_type, correlation_id)
       SELECT
         fws.kafka_key,
         fws.flattened_event,
         CAST(NULL AS STRING),
-        JSON_VALUE(fws.conversion_result, '$.target_HCM_payload'),
-        fws.target_HCM,
+        JSON_VALUE(fws.conversion_result, '$.target_BENTECH_payload'),
+        fws.target_BENTECH,
         fws.group_id,
         fws.event_type,
         fws.correlation_id
       FROM (
         SELECT
-          kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id,
+          kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id,
           workdayeoidataconversion(flattened_event) AS conversion_result
-        FROM `standard.eda.hcmdata.flink.workday`
+        FROM `standard.eda.bentechdata.flink.workday`
       ) fws
       WHERE fws.conversion_result IS NOT NULL
         AND JSON_VALUE(fws.conversion_result, '$.exception') IS NULL;
 
       -- DLQ path: UDF returned null or returned an exception
-      INSERT INTO `standard.eda.hcmdata.flink.workday.dlq`
-      (kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id)
+      INSERT INTO `standard.eda.bentechdata.flink.workday.dlq`
+      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
       SELECT
         fws.kafka_key,
         fws.flattened_event,
         JSON_VALUE(fws.conversion_result, '$.exception'),
-        fws.target_HCM,
+        fws.target_BENTECH,
         fws.group_id,
         fws.event_type,
         fws.correlation_id
       FROM (
         SELECT
-          kafka_key, flattened_event, exception, target_HCM, group_id, event_type, correlation_id,
+          kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id,
           workdayeoidataconversion(flattened_event) AS conversion_result
-        FROM `standard.eda.hcmdata.flink.workday`
+        FROM `standard.eda.bentechdata.flink.workday`
       ) fws
       WHERE fws.conversion_result IS NULL
         OR JSON_VALUE(fws.conversion_result, '$.exception') IS NOT NULL;
@@ -324,5 +324,5 @@ resource "confluent_flink_statement" "transform_workday" {
     secret = var.flink_api_secret
   }
 
-  depends_on = [confluent_flink_statement.route_hcm]
+  depends_on = [confluent_flink_statement.route_bentech]
 }

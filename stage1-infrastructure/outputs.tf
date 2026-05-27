@@ -7,6 +7,22 @@ output "flink_compute_pool_id" {
   value       = confluent_flink_compute_pool.standard_poc.id
 }
 
+output "flink_runner_sa_id" {
+  description = "Copy this into stage2/terraform.tfvars as flink_principal_id"
+  value       = confluent_service_account.flink_runner.id
+}
+
+output "flink_runner_api_key_id" {
+  description = "Copy this into stage2/terraform.tfvars as flink_api_key"
+  value       = confluent_api_key.flink_key.id
+}
+
+output "flink_runner_api_key_secret" {
+  description = "Copy this into stage2/terraform.tfvars as flink_api_secret"
+  value       = confluent_api_key.flink_key.secret
+  sensitive   = true
+}
+
 output "kafka_topics_created" {
   description = "List of created Kafka topic names"
   value = [
@@ -17,7 +33,7 @@ output "kafka_topics_created" {
     confluent_kafka_topic.flink_workday.topic_name,
     confluent_kafka_topic.flink_workday_dlq.topic_name,
     confluent_kafka_topic.workday_sink.topic_name,
-    confluent_kafka_topic.flink_hcm2.topic_name,
+    confluent_kafka_topic.flink_bentech2.topic_name,
     confluent_kafka_topic.workday_response.topic_name,
     confluent_kafka_topic.workday_connector_dlq.topic_name,
     confluent_kafka_topic.workday_error.topic_name,
@@ -41,8 +57,8 @@ output "schemas_created" {
     confluent_schema.flink_workday_dlq_key.subject_name,
     confluent_schema.workday_sink_value.subject_name,
     confluent_schema.workday_sink_key.subject_name,
-    confluent_schema.flink_hcm2_value.subject_name,
-    confluent_schema.flink_hcm2_key.subject_name,
+    confluent_schema.flink_bentech2_value.subject_name,
+    confluent_schema.flink_bentech2_key.subject_name,
     confluent_schema.workday_response_value.subject_name,
     confluent_schema.workday_response_key.subject_name,
     confluent_schema.workday_connector_dlq_value.subject_name,

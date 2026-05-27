@@ -13,7 +13,7 @@
           {"name": "message_version", "type": ["null", "string"], "default": null},
           {"name": "correlation_id", "type": ["null", "string"], "default": null},
           {"name": "group_id", "type": ["null", "string"], "default": null},
-          {"name": "target_hcm", "type": ["null", "string"], "default": null},
+          {"name": "target_bentech", "type": ["null", "string"], "default": null},
           {"name": "target_api_url", "type": ["null", "string"], "default": null},
           {"name": "target_api_token_url", "type": ["null", "string"], "default": null},
           {"name": "event_type", "type": ["null", "string"], "default": null},

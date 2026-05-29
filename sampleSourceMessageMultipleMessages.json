@@ -1,0 +1,275 @@
+{
+  "eventMetaData": {
+    "com.standardinsurance.eoi.EventMetaData": {
+      "messageSource": { "string": "EDA" },
+      "messageVersion": { "string": "v42.0" },
+      "correlationId": { "string": "abc123-xyz" },
+      "groupId": { "string": "WMT-12345" },
+      "targetBentech": { "string": "Workday" },
+      "targetHostname": { "string": "https://wd2-impl-services1.workday.com" },
+      "targetTokenHostname": { "string": "https://wd2-impl-services1.workday.com" },
+      "eventType": { "string": "BenefitsEOI" },
+      "contentType": { "string": "application/avro" },
+      "workerId": { "string": "100319TS" }
+    }
+  },
+  "eventData": {
+    "com.standardinsurance.eoi.EventData": {
+      "transmission": {
+        "com.standardinsurance.eoi.Transmission": {
+          "transmissionGuid": { "string": "9106afe7-ade6-4263-b053-20433c425479" },
+          "senderName": { "string": "TheStandard" },
+          "senderPlatformName": { "string": "TheStandard" },
+          "receiverName": { "string": "Workday" },
+          "creationDateTime": { "string": "2026-04-09T18:18:13Z" },
+          "testProductionCode": { "string": "Test" },
+          "transmissionTypeCode": { "string": "Changes Only" },
+          "employer": {
+            "array": [
+              {
+                "employerPartyId": { "string": "EMPLOYER-001" },
+                "masterAgreementNumber": { "string": "10185501" },
+                "employerName": { "string": "Employer One" },
+                "employee": {
+                  "array": [
+                    {
+                      "employeePartyId": { "string": "EMP-001" },
+                      "employeeSocialSecurityNumber": { "string": "111111111" },
+                      "employeeIdentifier": { "string": "E001" },
+                      "employeeName": {
+                        "com.standardinsurance.eoi.EmployeeName": {
+                          "firstName": { "string": "Alice" },
+                          "lastName": { "string": "Smith" }
+                        }
+                      },
+                      "coverage": {
+                        "array": [
+                          {
+                            "coverageId": { "string": "COV-001" },
+                            "groupPolicyNumber": { "string": "111111" },
+                            "productTypeCode": { "string": "Life" },
+                            "benefitPlanIdentifier": { "string": "AL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "111111111" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Approved" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-07-02" },
+                                "underwritingApprovedBenefitAmount": { "string": "500000.00" },
+                                "totalBenefitAmount": { "string": "1000000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          },
+                          {
+                            "coverageId": { "string": "COV-002" },
+                            "groupPolicyNumber": { "string": "111112" },
+                            "productTypeCode": { "string": "Dental" },
+                            "benefitPlanIdentifier": { "string": "DL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "111111112" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Denied" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-08-01" },
+                                "underwritingApprovedBenefitAmount": { "string": "0.00" },
+                                "totalBenefitAmount": { "string": "50000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "employeePartyId": { "string": "EMP-002" },
+                      "employeeSocialSecurityNumber": { "string": "222222222" },
+                      "employeeIdentifier": { "string": "E002" },
+                      "employeeName": {
+                        "com.standardinsurance.eoi.EmployeeName": {
+                          "firstName": { "string": "Bob" },
+                          "lastName": { "string": "Jones" }
+                        }
+                      },
+                      "coverage": {
+                        "array": [
+                          {
+                            "coverageId": { "string": "COV-003" },
+                            "groupPolicyNumber": { "string": "222221" },
+                            "productTypeCode": { "string": "Life" },
+                            "benefitPlanIdentifier": { "string": "AL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "222222222" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Approved" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-09-01" },
+                                "underwritingApprovedBenefitAmount": { "string": "250000.00" },
+                                "totalBenefitAmount": { "string": "500000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          },
+                          {
+                            "coverageId": { "string": "COV-004" },
+                            "groupPolicyNumber": { "string": "222222" },
+                            "productTypeCode": { "string": "Vision" },
+                            "benefitPlanIdentifier": { "string": "VL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "222222223" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Approved" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-09-15" },
+                                "underwritingApprovedBenefitAmount": { "string": "10000.00" },
+                                "totalBenefitAmount": { "string": "10000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "employerPartyId": { "string": "EMPLOYER-002" },
+                "masterAgreementNumber": { "string": "10185502" },
+                "employerName": { "string": "Employer Two" },
+                "employee": {
+                  "array": [
+                    {
+                      "employeePartyId": { "string": "EMP-003" },
+                      "employeeSocialSecurityNumber": { "string": "333333333" },
+                      "employeeIdentifier": { "string": "E003" },
+                      "employeeName": {
+                        "com.standardinsurance.eoi.EmployeeName": {
+                          "firstName": { "string": "Carol" },
+                          "lastName": { "string": "White" }
+                        }
+                      },
+                      "coverage": {
+                        "array": [
+                          {
+                            "coverageId": { "string": "COV-005" },
+                            "groupPolicyNumber": { "string": "333331" },
+                            "productTypeCode": { "string": "Life" },
+                            "benefitPlanIdentifier": { "string": "AL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "333333333" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Approved" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-10-01" },
+                                "underwritingApprovedBenefitAmount": { "string": "300000.00" },
+                                "totalBenefitAmount": { "string": "600000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          },
+                          {
+                            "coverageId": { "string": "COV-006" },
+                            "groupPolicyNumber": { "string": "333332" },
+                            "productTypeCode": { "string": "Dental" },
+                            "benefitPlanIdentifier": { "string": "DL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "333333334" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Denied" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-10-15" },
+                                "underwritingApprovedBenefitAmount": { "string": "0.00" },
+                                "totalBenefitAmount": { "string": "25000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "employeePartyId": { "string": "EMP-004" },
+                      "employeeSocialSecurityNumber": { "string": "444444444" },
+                      "employeeIdentifier": { "string": "E004" },
+                      "employeeName": {
+                        "com.standardinsurance.eoi.EmployeeName": {
+                          "firstName": { "string": "Dave" },
+                          "lastName": { "string": "Brown" }
+                        }
+                      },
+                      "coverage": {
+                        "array": [
+                          {
+                            "coverageId": { "string": "COV-007" },
+                            "groupPolicyNumber": { "string": "444441" },
+                            "productTypeCode": { "string": "Life" },
+                            "benefitPlanIdentifier": { "string": "AL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "444444444" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Approved" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-11-01" },
+                                "underwritingApprovedBenefitAmount": { "string": "750000.00" },
+                                "totalBenefitAmount": { "string": "1500000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          },
+                          {
+                            "coverageId": { "string": "COV-008" },
+                            "groupPolicyNumber": { "string": "444442" },
+                            "productTypeCode": { "string": "Vision" },
+                            "benefitPlanIdentifier": { "string": "VL" },
+                            "coverageInsured": {
+                              "array": [{ "insuredPartyId": { "string": "444444445" } }]
+                            },
+                            "underwritingStatus": {
+                              "com.standardinsurance.eoi.UnderwritingStatus": {
+                                "underwritingDecisionCode": { "string": "Approved" },
+                                "underwritingDecisionEffectiveDate": { "string": "2025-11-15" },
+                                "underwritingApprovedBenefitAmount": { "string": "15000.00" },
+                                "totalBenefitAmount": { "string": "15000.00" },
+                                "applicationStatusCode": { "string": "Completed" },
+                                "applicationStatusDateTime": { "string": "2026-04-09T18:18:13Z" }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "audit": {
+            "com.standardinsurance.eoi.Audit": {
+              "auditId": { "string": "b14ce35c-888d-4614-92e7-e3bdaf816bcb" },
+              "employerRecordQuantity": { "int": 2 },
+              "employeeRecordQuantity": { "int": 4 },
+              "dependentRecordQuantity": { "int": 0 },
+              "coverageRecordQuantity": { "int": 8 },
+              "underwritingStatusRecordQuantity": { "int": 8 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

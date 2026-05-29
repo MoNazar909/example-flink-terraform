@@ -2,27 +2,6 @@
 # Outputs — copy these values into stage2/terraform.tfvars
 # ============================================================
 
-output "flink_compute_pool_id" {
-  description = "Copy this into stage2/terraform.tfvars as flink_compute_pool_id"
-  value       = confluent_flink_compute_pool.standard_poc.id
-}
-
-output "flink_runner_sa_id" {
-  description = "Copy this into stage2/terraform.tfvars as flink_principal_id"
-  value       = confluent_service_account.flink_runner.id
-}
-
-output "flink_runner_api_key_id" {
-  description = "Copy this into stage2/terraform.tfvars as flink_api_key"
-  value       = confluent_api_key.flink_key.id
-}
-
-output "flink_runner_api_key_secret" {
-  description = "Copy this into stage2/terraform.tfvars as flink_api_secret"
-  value       = confluent_api_key.flink_key.secret
-  sensitive   = true
-}
-
 output "kafka_topics_created" {
   description = "List of created Kafka topic names"
   value = [

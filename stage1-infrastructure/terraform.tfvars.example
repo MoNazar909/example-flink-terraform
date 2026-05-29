@@ -1,17 +1,19 @@
 # ============================================================
-# Confluent Cloud API Credentials
+# Kafka Cluster
 # ============================================================
-confluent_cloud_api_key    = ""
-confluent_cloud_api_secret = ""
-
-# ============================================================
-# Environment and Cluster
-# ============================================================
-environment_id   = ""   # env-xxxxxx
-kafka_cluster_id = ""   # lkc-xxxxxx
+kafka_cluster_id    = ""   # lkc-xxxxxx
+kafka_rest_endpoint = ""   # https://pkc-xxxxx.<region>.aws.confluent.cloud:443
 
 # ============================================================
 # Schema Registry
 # ============================================================
 schema_registry_id  = ""   # lsrc-xxxxxx
 schema_registry_url = ""   # https://psrc-xxxxx.<region>.aws.confluent.cloud
+
+# ============================================================
+# Admin API Keys — from stage0 outputs
+# ============================================================
+cluster_admin_kafka_key_id     = ""   # from: terraform output cluster_admin_kafka_key_id (stage0)
+cluster_admin_kafka_key_secret = ""   # from: terraform output cluster_admin_kafka_key_secret (stage0)
+sr_admin_key_id                = ""   # from: terraform output sr_admin_sr_key_id (stage0)
+sr_admin_key_secret            = ""   # from: terraform output sr_admin_sr_key_secret (stage0)

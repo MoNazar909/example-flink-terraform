@@ -1,0 +1,16 @@
+# ============================================================
+# Confluent Cloud API Credentials
+# ============================================================
+confluent_cloud_api_key    = ""   # Cloud resource management API key
+confluent_cloud_api_secret = ""
+
+# ============================================================
+# Environment and Cluster
+# ============================================================
+environment_id   = ""   # e.g. env-xxxxxx
+kafka_cluster_id = ""   # e.g. lkc-xxxxxx
+
+# ============================================================
+# Schema Registry
+# ============================================================
+schema_registry_id = ""   # e.g. lsrc-xxxxxx

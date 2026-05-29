@@ -1,10 +1,4 @@
 # ============================================================
-# Confluent Cloud API Credentials
-# ============================================================
-confluent_cloud_api_key    = ""
-confluent_cloud_api_secret = ""
-
-# ============================================================
 # Environment and Cluster
 # ============================================================
 environment_id   = ""   # env-xxxxxx
@@ -14,13 +8,13 @@ flink_catalog    = ""   # top-right catalog dropdown in Flink SQL editor (e.g. d
 flink_database   = ""   # top-right database dropdown in Flink SQL editor (Kafka cluster display name, e.g. cluster_0)
 
 # ============================================================
-# Flink Credentials
+# Flink Credentials — from stage0 and manually created compute pool
 # ============================================================
 flink_rest_endpoint   = ""   # https://flink.<region>.aws.confluent.cloud
-flink_api_key         = ""   # from: terraform output flink_runner_api_key_id after Stage 1
-flink_api_secret      = ""   # from: terraform output flink_runner_api_key_secret after Stage 1
-flink_principal_id    = ""   # sa-xxxxxxx  (from: terraform output flink_runner_sa_id after Stage 1)
-flink_compute_pool_id = ""   # lfcp-xxxxxx  (from: terraform output flink_compute_pool_id after Stage 1)
+flink_api_key         = ""   # from: terraform output flink_bentech_flink_key_id (stage0)
+flink_api_secret      = ""   # from: terraform output flink_bentech_flink_key_secret (stage0)
+flink_principal_id    = ""   # from: terraform output flink_bentech_sa_id (stage0)
+flink_compute_pool_id = ""   # from: manually created compute pool in Confluent Cloud UI
 
 # ============================================================
 # UDF Artifact

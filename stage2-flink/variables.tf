@@ -1,20 +1,4 @@
 # ============================================================
-# Confluent Cloud API Credentials
-# ============================================================
-
-variable "confluent_cloud_api_key" {
-  description = "Confluent Cloud API key (Cloud resource management scope)"
-  type        = string
-  sensitive   = true
-}
-
-variable "confluent_cloud_api_secret" {
-  description = "Confluent Cloud API secret (Cloud resource management scope)"
-  type        = string
-  sensitive   = true
-}
-
-# ============================================================
 # Environment and Cluster
 # ============================================================
 
@@ -70,7 +54,7 @@ variable "flink_compute_pool_id" {
 }
 
 variable "flink_principal_id" {
-  description = "Service account ID for Flink statements — from stage1 output flink_runner_sa_id (e.g. sa-xxxxxx)"
+  description = "Service account ID for Flink statements — from stage0 output flink_bentech_sa_id (e.g. sa-xxxxxx)"
   type        = string
 }
 

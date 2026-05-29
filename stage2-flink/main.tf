@@ -48,12 +48,9 @@ resource "confluent_flink_statement" "register_udf" {
 
   statement_name = "std-ins-register-udf"
 
-  statement = <<-EOT
-    CREATE FUNCTION IF NOT EXISTS workdayeoidataconversion
-    AS 'com.standardinsurance.eoi.flink.udf.WorkdayEOIDataConversionUDF'
-    LANGUAGE JAVA
-    USING JAR 'confluent-artifact://${var.udf_artifact_id}';
-  EOT
+  statement = templatefile("${path.module}/flink-sql/01_register_udf.sql", {
+    udf_artifact_id = var.udf_artifact_id
+  })
 
   properties = {
     "sql.current-catalog"  = var.flink_catalog
@@ -95,64 +92,7 @@ resource "confluent_flink_statement" "flatten_eoi" {
 
   statement_name = "std-ins-flatten-eoi"
 
-  statement = <<-EOT
-    EXECUTE STATEMENT SET
-    BEGIN
-
-      -- Success path: both metadata and data are present
-      INSERT INTO `standard.eda.bentechdata.flink.common`
-      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT
-        CONCAT(event_MetaData.group_id, '-', event_Data.worker_id, '-', event_MetaData.target_bentech, '-', event_MetaData.event_type),
-        JSON_OBJECT(
-          KEY 'msg_source'              VALUE event_MetaData.msg_source,
-          KEY 'message_version'         VALUE event_MetaData.message_version,
-          KEY 'correlation_id'          VALUE event_MetaData.correlation_id,
-          KEY 'group_id'                VALUE event_MetaData.group_id,
-          KEY 'target_bentech'              VALUE event_MetaData.target_bentech,
-          KEY 'target_api_url'          VALUE event_MetaData.target_api_url,
-          KEY 'target_api_token_url'    VALUE event_MetaData.target_api_token_url,
-          KEY 'event_type'              VALUE event_MetaData.event_type,
-          KEY 'content_type'            VALUE event_MetaData.content_type,
-          KEY 'worker_id'               VALUE event_Data.worker_id,
-          KEY 'worker_id_type'          VALUE event_Data.worker_id_type,
-          KEY 'worker_descriptor'       VALUE event_Data.worker_descriptor,
-          KEY 'benefit_plan_id'         VALUE event_Data.benefit_plan_id,
-          KEY 'benefit_plan_id_type'    VALUE event_Data.benefit_plan_id_type,
-          KEY 'benefit_plan_descriptor' VALUE event_Data.benefit_plan_descriptor,
-          KEY 'approve_for_selected'    VALUE CAST(event_Data.approve_for_selected AS STRING),
-          KEY 'deny_for_selected'       VALUE CAST(event_Data.deny_for_selected AS STRING),
-          KEY 'eoi_decision_date'       VALUE event_Data.eoi_decision_date
-        ),
-        CAST(NULL AS STRING),
-        event_MetaData.target_bentech,
-        event_MetaData.group_id,
-        event_MetaData.event_type,
-        event_MetaData.correlation_id
-      FROM `standard.eda.bentechdata.eoi`
-      WHERE event_MetaData IS NOT NULL AND event_Data IS NOT NULL;
-
-      -- DLQ path: event_MetaData or event_Data is null
-      INSERT INTO `standard.eda.bentechdata.eoi.dlq`
-      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT
-        CONCAT(
-          COALESCE(event_MetaData.group_id, 'unknown'), '-',
-          COALESCE(event_Data.worker_id,    'unknown'), '-',
-          COALESCE(event_MetaData.target_bentech,  'unknown'), '-',
-          COALESCE(event_MetaData.event_type,  'unknown')
-        ),
-        CAST(NULL AS STRING),
-        'flatten_eoi: event_MetaData or event_Data is null',
-        event_MetaData.target_bentech,
-        event_MetaData.group_id,
-        event_MetaData.event_type,
-        event_MetaData.correlation_id
-      FROM `standard.eda.bentechdata.eoi`
-      WHERE event_MetaData IS NULL OR event_Data IS NULL;
-
-    END;
-  EOT
+  statement = file("${path.module}/flink-sql/02_flatten_eoi.sql")
 
   properties = {
     "sql.current-catalog"  = var.flink_catalog
@@ -192,44 +132,7 @@ resource "confluent_flink_statement" "route_bentech" {
 
   statement_name = "std-ins-route-bentech"
 
-  statement = <<-EOT
-    EXECUTE STATEMENT SET
-    BEGIN
-
-      -- Workday routing
-      INSERT INTO `standard.eda.bentechdata.flink.workday`
-      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id
-      FROM `standard.eda.bentechdata.flink.common`
-      WHERE target_BENTECH = 'Workday';
-
-      -- BENTECH2 routing
-      INSERT INTO `standard.eda.bentechdata.flink.bentech2`
-      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id
-      FROM `standard.eda.bentechdata.flink.common`
-      WHERE target_BENTECH = 'BENTECH2';
-
-      -- TODO: Add routing blocks here for additional BENTECH systems
-      -- Example:
-      -- INSERT INTO `standard.eda.bentechdata.flink.sap` (...) SELECT ... WHERE target_BENTECH = 'SAP';
-
-      -- DLQ: target_BENTECH does not match any configured system
-      INSERT INTO `standard.eda.bentechdata.flink.common.dlq`
-      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT
-        kafka_key,
-        flattened_event,
-        CONCAT('route_bentech: no routing rule for target_BENTECH=', COALESCE(target_BENTECH, 'null')),
-        target_BENTECH,
-        group_id,
-        event_type,
-        correlation_id
-      FROM `standard.eda.bentechdata.flink.common`
-      WHERE target_BENTECH NOT IN ('Workday', 'BENTECH2') OR target_BENTECH IS NULL;
-
-    END;
-  EOT
+  statement = file("${path.module}/flink-sql/03_route_bentech.sql")
 
   properties = {
     "sql.current-catalog"  = var.flink_catalog
@@ -267,53 +170,7 @@ resource "confluent_flink_statement" "transform_workday" {
 
   statement_name = "std-ins-transform-workday"
 
-  statement = <<-EOT
-    EXECUTE STATEMENT SET
-    BEGIN
-
-      -- Success path: UDF returned a result with no exception
-      INSERT INTO `standard.eda.bentechdata.workday`
-      (kafka_key, flattened_event, exception, target_BENTECH_payload, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT
-        fws.kafka_key,
-        fws.flattened_event,
-        CAST(NULL AS STRING),
-        JSON_VALUE(fws.conversion_result, '$.target_BENTECH_payload'),
-        fws.target_BENTECH,
-        fws.group_id,
-        fws.event_type,
-        fws.correlation_id
-      FROM (
-        SELECT
-          kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id,
-          workdayeoidataconversion(flattened_event) AS conversion_result
-        FROM `standard.eda.bentechdata.flink.workday`
-      ) fws
-      WHERE fws.conversion_result IS NOT NULL
-        AND JSON_VALUE(fws.conversion_result, '$.exception') IS NULL;
-
-      -- DLQ path: UDF returned null or returned an exception
-      INSERT INTO `standard.eda.bentechdata.flink.workday.dlq`
-      (kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id)
-      SELECT
-        fws.kafka_key,
-        fws.flattened_event,
-        JSON_VALUE(fws.conversion_result, '$.exception'),
-        fws.target_BENTECH,
-        fws.group_id,
-        fws.event_type,
-        fws.correlation_id
-      FROM (
-        SELECT
-          kafka_key, flattened_event, exception, target_BENTECH, group_id, event_type, correlation_id,
-          workdayeoidataconversion(flattened_event) AS conversion_result
-        FROM `standard.eda.bentechdata.flink.workday`
-      ) fws
-      WHERE fws.conversion_result IS NULL
-        OR JSON_VALUE(fws.conversion_result, '$.exception') IS NOT NULL;
-
-    END;
-  EOT
+  statement = file("${path.module}/flink-sql/04_transform_workday.sql")
 
   properties = {
     "sql.current-catalog"  = var.flink_catalog

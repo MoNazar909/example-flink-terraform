@@ -1,0 +1,82 @@
+{
+  "eventMetaData": {
+    "com.standardinsurance.eoi.EventMetaData": {
+      "messageSource":      {"string": "EDA"},
+      "messageVersion":     {"string": "v42.0"},
+      "correlationId":      {"string": "abc123-xyz"},
+      "groupId":            {"string": "WMT-12345"},
+      "targetBentech":      {"string": "Workday"},
+      "targetHostname":     {"string": "https://wd2-impl-services1.workday.com"},
+      "targetTokenHostname":{"string": "https://wd2-impl-services1.workday.com"},
+      "eventType":          {"string": "BenefitsEOI"},
+      "contentType":        {"string": "application/avro"},
+      "workerId":           {"string": "100319TS"}
+    }
+  },
+  "eventData": {
+    "com.standardinsurance.eoi.EventData": {
+      "transmission": {
+        "com.standardinsurance.eoi.Transmission": {
+          "transmissionGuid":    {"string": "9106afe7-ade6-4263-b053-20433c425479"},
+          "senderName":          {"string": "TheStandard"},
+          "senderPlatformName":  {"string": "TheStandard"},
+          "receiverName":        {"string": "Workday"},
+          "creationDateTime":    {"string": "2026-04-09T18:18:13Z"},
+          "testProductionCode":  {"string": "Test"},
+          "transmissionTypeCode":{"string": "Changes Only"},
+          "employer": {"array": [
+            {
+              "employerPartyId":       {"string": "2356478"},
+              "masterAgreementNumber": {"string": "10185502"},
+              "employerName":          {"string": "Workday SSO Test"},
+              "employee": {"array": [
+                {
+                  "employeePartyId":              {"string": "987654321"},
+                  "employeeSocialSecurityNumber": {"string": "123456789"},
+                  "employeeIdentifier":           {"string": "231423"},
+                  "employeeName": {
+                    "com.standardinsurance.eoi.EmployeeName": {
+                      "firstName": {"string": "Connie"},
+                      "lastName":  {"string": "Tester"}
+                    }
+                  },
+                  "coverage": {"array": [
+                    {
+                      "coverageId":            {"string": "4311"},
+                      "groupPolicyNumber":     {"string": "999999"},
+                      "productTypeCode":       {"string": "Life"},
+                      "benefitPlanIdentifier": {"string": "AL"},
+                      "coverageInsured": {"array": [
+                        {"insuredPartyId": {"string": "123456789"}}
+                      ]},
+                      "underwritingStatus": {
+                        "com.standardinsurance.eoi.UnderwritingStatus": {
+                          "underwritingDecisionCode":          {"string": "Approved"},
+                          "underwritingDecisionEffectiveDate": {"string": "2025-07-02"},
+                          "underwritingApprovedBenefitAmount": {"string": "500000.00"},
+                          "totalBenefitAmount":                {"string": "1000000.00"},
+                          "applicationStatusCode":             {"string": "Completed"},
+                          "applicationStatusDateTime":         {"string": "2026-04-09T18:18:13Z"}
+                        }
+                      }
+                    }
+                  ]}
+                }
+              ]}
+            }
+          ]},
+          "audit": {
+            "com.standardinsurance.eoi.Audit": {
+              "auditId":                          {"string": "b14ce35c-888d-4614-92e7-e3bdaf816bcb"},
+              "employerRecordQuantity":           {"int": 1},
+              "employeeRecordQuantity":           {"int": 1},
+              "dependentRecordQuantity":          {"int": 0},
+              "coverageRecordQuantity":           {"int": 1},
+              "underwritingStatusRecordQuantity": {"int": 1}
+            }
+          }
+        }
+      }
+    }
+  }
+}

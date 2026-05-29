@@ -1,0 +1,171 @@
+{
+  "type": "record",
+  "name": "EvidenceOfInsurability",
+  "namespace": "com.standardinsurance.eoi",
+  "fields": [
+    {
+      "name": "eventMetaData",
+      "type": ["null", {
+        "type": "record",
+        "name": "EventMetaData",
+        "namespace": "com.standardinsurance.eoi",
+        "fields": [
+          {"name": "messageSource",       "type": ["null", "string"], "default": null},
+          {"name": "messageVersion",       "type": ["null", "string"], "default": null},
+          {"name": "correlationId",        "type": ["null", "string"], "default": null},
+          {"name": "groupId",              "type": ["null", "string"], "default": null},
+          {"name": "targetBentech",        "type": ["null", "string"], "default": null},
+          {"name": "targetHostname",       "type": ["null", "string"], "default": null},
+          {"name": "targetTokenHostname",  "type": ["null", "string"], "default": null},
+          {"name": "eventType",            "type": ["null", "string"], "default": null},
+          {"name": "contentType",          "type": ["null", "string"], "default": null},
+          {"name": "workerId",             "type": ["null", "string"], "default": null}
+        ]
+      }],
+      "default": null
+    },
+    {
+      "name": "eventData",
+      "type": ["null", {
+        "type": "record",
+        "name": "EventData",
+        "namespace": "com.standardinsurance.eoi",
+        "fields": [
+          {
+            "name": "transmission",
+            "type": ["null", {
+              "type": "record",
+              "name": "Transmission",
+              "namespace": "com.standardinsurance.eoi",
+              "fields": [
+                {"name": "transmissionGuid",      "type": ["null", "string"], "default": null},
+                {"name": "senderName",             "type": ["null", "string"], "default": null},
+                {"name": "senderPlatformName",     "type": ["null", "string"], "default": null},
+                {"name": "receiverName",           "type": ["null", "string"], "default": null},
+                {"name": "creationDateTime",       "type": ["null", "string"], "default": null},
+                {"name": "testProductionCode",     "type": ["null", "string"], "default": null},
+                {"name": "transmissionTypeCode",   "type": ["null", "string"], "default": null},
+                {
+                  "name": "employer",
+                  "type": ["null", {
+                    "type": "array",
+                    "items": {
+                      "type": "record",
+                      "name": "Employer",
+                      "namespace": "com.standardinsurance.eoi",
+                      "fields": [
+                        {"name": "employerPartyId",       "type": ["null", "string"], "default": null},
+                        {"name": "masterAgreementNumber", "type": ["null", "string"], "default": null},
+                        {"name": "employerName",          "type": ["null", "string"], "default": null},
+                        {
+                          "name": "employee",
+                          "type": ["null", {
+                            "type": "array",
+                            "items": {
+                              "type": "record",
+                              "name": "Employee",
+                              "namespace": "com.standardinsurance.eoi",
+                              "fields": [
+                                {"name": "employeePartyId",              "type": ["null", "string"], "default": null},
+                                {"name": "employeeSocialSecurityNumber", "type": ["null", "string"], "default": null},
+                                {"name": "employeeIdentifier",           "type": ["null", "string"], "default": null},
+                                {
+                                  "name": "employeeName",
+                                  "type": ["null", {
+                                    "type": "record",
+                                    "name": "EmployeeName",
+                                    "namespace": "com.standardinsurance.eoi",
+                                    "fields": [
+                                      {"name": "firstName", "type": ["null", "string"], "default": null},
+                                      {"name": "lastName",  "type": ["null", "string"], "default": null}
+                                    ]
+                                  }],
+                                  "default": null
+                                },
+                                {
+                                  "name": "coverage",
+                                  "type": ["null", {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "record",
+                                      "name": "Coverage",
+                                      "namespace": "com.standardinsurance.eoi",
+                                      "fields": [
+                                        {"name": "coverageId",            "type": ["null", "string"], "default": null},
+                                        {"name": "groupPolicyNumber",     "type": ["null", "string"], "default": null},
+                                        {"name": "productTypeCode",       "type": ["null", "string"], "default": null},
+                                        {"name": "benefitPlanIdentifier", "type": ["null", "string"], "default": null},
+                                        {
+                                          "name": "coverageInsured",
+                                          "type": ["null", {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "record",
+                                              "name": "CoverageInsured",
+                                              "namespace": "com.standardinsurance.eoi",
+                                              "fields": [
+                                                {"name": "insuredPartyId", "type": ["null", "string"], "default": null}
+                                              ]
+                                            }
+                                          }],
+                                          "default": null
+                                        },
+                                        {
+                                          "name": "underwritingStatus",
+                                          "type": ["null", {
+                                            "type": "record",
+                                            "name": "UnderwritingStatus",
+                                            "namespace": "com.standardinsurance.eoi",
+                                            "fields": [
+                                              {"name": "underwritingDecisionCode",          "type": ["null", "string"], "default": null},
+                                              {"name": "underwritingDecisionEffectiveDate", "type": ["null", "string"], "default": null},
+                                              {"name": "underwritingApprovedBenefitAmount", "type": ["null", "string"], "default": null},
+                                              {"name": "totalBenefitAmount",                "type": ["null", "string"], "default": null},
+                                              {"name": "applicationStatusCode",             "type": ["null", "string"], "default": null},
+                                              {"name": "applicationStatusDateTime",         "type": ["null", "string"], "default": null}
+                                            ]
+                                          }],
+                                          "default": null
+                                        }
+                                      ]
+                                    }
+                                  }],
+                                  "default": null
+                                }
+                              ]
+                            }
+                          }],
+                          "default": null
+                        }
+                      ]
+                    }
+                  }],
+                  "default": null
+                },
+                {
+                  "name": "audit",
+                  "type": ["null", {
+                    "type": "record",
+                    "name": "Audit",
+                    "namespace": "com.standardinsurance.eoi",
+                    "fields": [
+                      {"name": "auditId",                          "type": ["null", "string"], "default": null},
+                      {"name": "employerRecordQuantity",           "type": ["null", "int"],    "default": null},
+                      {"name": "employeeRecordQuantity",           "type": ["null", "int"],    "default": null},
+                      {"name": "dependentRecordQuantity",          "type": ["null", "int"],    "default": null},
+                      {"name": "coverageRecordQuantity",           "type": ["null", "int"],    "default": null},
+                      {"name": "underwritingStatusRecordQuantity", "type": ["null", "int"],    "default": null}
+                    ]
+                  }],
+                  "default": null
+                }
+              ]
+            }],
+            "default": null
+          }
+        ]
+      }],
+      "default": null
+    }
+  ]
+}

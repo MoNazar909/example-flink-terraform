@@ -1,52 +1,43 @@
 -- Step 3: Transform Workday messages to SOAP XML via UDF
 -- Reads from:  standard-eda-bentechdata-flink-workday      (flink_common.avsc — camelCase)
--- Success  →   standard-eda-bentech-workday                (flink_bentechsink_workday.avsc — snake_case, HTTP Sink Connector reads from here)
--- DLQ      →   standard-eda-bentechdata-flink-workday-dlq  (flink_common.avsc — camelCase, UDF returned null or exception)
+-- Success  →   standard-eda-bentech-workday                (flink_bentechsink_workday.avsc)
+-- DLQ      →   standard-eda-bentechdata-flink-workday-dlq  (flink_common.avsc — camelCase)
+-- Note: one input message may produce N output messages (one per employer/employee/coverage combo)
 
 EXECUTE STATEMENT SET
 BEGIN
 
-  -- Success path: UDF returned a result with no exception
+  -- Success path: UDF emitted a result with no exception
   INSERT INTO `standard-eda-bentech-workday`
   (kafka_key, flattenedEvent, exception, targetBentechPayload, targetBentech, groupId, eventType, correlationId)
   SELECT
-    fws.kafka_key,
-    fws.flattenedEvent,
+    src.kafka_key,
+    src.flattenedEvent,
     CAST(NULL AS STRING),
-    JSON_VALUE(fws.conversion_result, '$.targetBentechPayload'),
-    fws.targetBentech,
-    fws.groupId,
-    fws.eventType,
-    fws.correlationId
-  FROM (
-    SELECT
-      kafka_key, flattenedEvent, exception, targetBentech, groupId, eventType, correlationId,
-      workdayeoidataconversion(flattenedEvent) AS conversion_result
-    FROM `standard-eda-bentechdata-flink-workday`
-  ) fws
-  WHERE fws.conversion_result IS NOT NULL
-    AND JSON_VALUE(fws.conversion_result, '$.exception') IS NULL
-    AND JSON_VALUE(fws.conversion_result, '$.targetBentechPayload') IS NOT NULL;
+    JSON_VALUE(T.conversion_result, '$.targetBentechPayload'),
+    src.targetBentech,
+    src.groupId,
+    src.eventType,
+    src.correlationId
+  FROM `standard-eda-bentechdata-flink-workday` src
+  CROSS JOIN LATERAL TABLE(workdayeoidataconversion(src.flattenedEvent)) AS T(conversion_result)
+  WHERE JSON_VALUE(T.conversion_result, '$.exception') IS NULL
+    AND JSON_VALUE(T.conversion_result, '$.targetBentechPayload') IS NOT NULL;
 
-  -- DLQ path: UDF returned null, returned an exception, or returned a null payload
+  -- DLQ path: UDF emitted an exception or null payload
   INSERT INTO `standard-eda-bentechdata-flink-workday-dlq`
   (kafka_key, flattenedEvent, exception, targetBentech, groupId, eventType, correlationId)
   SELECT
-    fws.kafka_key,
-    fws.flattenedEvent,
-    JSON_VALUE(fws.conversion_result, '$.exception'),
-    fws.targetBentech,
-    fws.groupId,
-    fws.eventType,
-    fws.correlationId
-  FROM (
-    SELECT
-      kafka_key, flattenedEvent, exception, targetBentech, groupId, eventType, correlationId,
-      workdayeoidataconversion(flattenedEvent) AS conversion_result
-    FROM `standard-eda-bentechdata-flink-workday`
-  ) fws
-  WHERE fws.conversion_result IS NULL
-    OR JSON_VALUE(fws.conversion_result, '$.exception') IS NOT NULL
-    OR JSON_VALUE(fws.conversion_result, '$.targetBentechPayload') IS NULL;
+    src.kafka_key,
+    src.flattenedEvent,
+    JSON_VALUE(T.conversion_result, '$.exception'),
+    src.targetBentech,
+    src.groupId,
+    src.eventType,
+    src.correlationId
+  FROM `standard-eda-bentechdata-flink-workday` src
+  CROSS JOIN LATERAL TABLE(workdayeoidataconversion(src.flattenedEvent)) AS T(conversion_result)
+  WHERE JSON_VALUE(T.conversion_result, '$.exception') IS NOT NULL
+     OR JSON_VALUE(T.conversion_result, '$.targetBentechPayload') IS NULL;
 
 END;

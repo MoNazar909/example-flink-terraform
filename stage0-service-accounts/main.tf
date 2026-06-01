@@ -120,25 +120,25 @@ resource "confluent_api_key" "sr_admin_sr_key" {
 
 resource "confluent_service_account" "eda_source" {
   display_name = "standard-eda-source-sa"
-  description  = "Used by EDA source system to publish EOI events to standard-eda-bentech-eoi"
+  description  = "Used by EDA source system to publish EOI events to standard-eda-bentechdata-eoi"
 }
 
 resource "confluent_role_binding" "eda_source_topic_write" {
   principal   = "User:${confluent_service_account.eda_source.id}"
   role_name   = "DeveloperWrite"
-  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentech-eoi"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentechdata-eoi"
 }
 
 resource "confluent_role_binding" "eda_source_sr_read" {
   principal   = "User:${confluent_service_account.eda_source.id}"
   role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentech-eoi-*"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-eoi-*"
 }
 
 resource "confluent_role_binding" "eda_source_sr_write" {
   principal   = "User:${confluent_service_account.eda_source.id}"
   role_name   = "DeveloperWrite"
-  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentech-eoi-*"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-eoi-*"
 }
 
 resource "confluent_api_key" "eda_source_kafka_key" {
@@ -199,7 +199,7 @@ resource "confluent_role_binding" "flink_bentech_flink_developer" {
 resource "confluent_role_binding" "flink_bentech_eoi_topic_read" {
   principal   = "User:${confluent_service_account.flink_bentech.id}"
   role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentech-eoi"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentechdata-eoi"
 }
 
 resource "confluent_role_binding" "flink_bentech_flink_topics_read" {
@@ -218,13 +218,13 @@ resource "confluent_role_binding" "flink_bentech_flink_topics_write" {
 resource "confluent_role_binding" "flink_bentech_workday_sink_topic_write" {
   principal   = "User:${confluent_service_account.flink_bentech.id}"
   role_name   = "DeveloperWrite"
-  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentech-workday"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentechdata-workday"
 }
 
 resource "confluent_role_binding" "flink_bentech_eoi_sr_read" {
   principal   = "User:${confluent_service_account.flink_bentech.id}"
   role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentech-eoi-*"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-eoi-*"
 }
 
 resource "confluent_role_binding" "flink_bentech_flink_sr_read" {
@@ -239,17 +239,17 @@ resource "confluent_role_binding" "flink_bentech_flink_sr_write" {
   crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-flink-*"
 }
 
-# Avro serializer calls POST /subjects/standard-eda-bentech-workday-{key,value}/versions at startup
+# Avro serializer calls POST /subjects/standard-eda-bentechdata-workday-{key,value}/versions at startup
 resource "confluent_role_binding" "flink_bentech_workday_sink_sr_read" {
   principal   = "User:${confluent_service_account.flink_bentech.id}"
   role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentech-workday-*"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-workday-*"
 }
 
 resource "confluent_role_binding" "flink_bentech_workday_sink_sr_write" {
   principal   = "User:${confluent_service_account.flink_bentech.id}"
   role_name   = "DeveloperWrite"
-  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentech-workday-*"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-workday-*"
 }
 
 resource "confluent_role_binding" "flink_bentech_consumer_group" {
@@ -391,7 +391,7 @@ resource "confluent_service_account" "workday_connector" {
 resource "confluent_role_binding" "workday_connector_sink_topic_read" {
   principal   = "User:${confluent_service_account.workday_connector.id}"
   role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentech-workday"
+  crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/topic=standard-eda-bentechdata-workday"
 }
 
 resource "confluent_role_binding" "workday_connector_response_topic_write" {
@@ -415,7 +415,7 @@ resource "confluent_role_binding" "workday_connector_dlq_topic_write" {
 resource "confluent_role_binding" "workday_connector_sink_sr_read" {
   principal   = "User:${confluent_service_account.workday_connector.id}"
   role_name   = "DeveloperRead"
-  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentech-workday-*"
+  crn_pattern = "${data.confluent_schema_registry_cluster.standard_poc.resource_name}/subject=standard-eda-bentechdata-workday-*"
 }
 
 resource "confluent_role_binding" "workday_connector_response_sr_read" {

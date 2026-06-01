@@ -1,5 +1,5 @@
 -- Step 1: Flatten EOI source messages into common topic
--- Reads from:  standard-eda-bentech-eoi
+-- Reads from:  standard-eda-bentechdata-eoi
 -- Success  →   standard-eda-bentechdata-flink-common
 -- Messages where eventMetaData or eventData is null are dropped (no DLQ for source topic)
 
@@ -21,5 +21,5 @@ SELECT
   eventMetaData.groupId,
   eventMetaData.eventType,
   eventMetaData.correlationId
-FROM `standard-eda-bentech-eoi`
+FROM `standard-eda-bentechdata-eoi`
 WHERE eventMetaData IS NOT NULL AND eventData IS NOT NULL;

@@ -21,7 +21,7 @@ resource "confluent_kafka_topic" "eoi_source" {
   kafka_cluster {
     id = var.kafka_cluster_id
   }
-  topic_name       = "standard-eda-bentech-eoi"
+  topic_name       = "standard-eda-bentechdata-eoi"
   partitions_count = 6
   rest_endpoint    = var.kafka_rest_endpoint
   config = {
@@ -93,7 +93,7 @@ resource "confluent_kafka_topic" "workday_sink" {
   kafka_cluster {
     id = var.kafka_cluster_id
   }
-  topic_name       = "standard-eda-bentech-workday"
+  topic_name       = "standard-eda-bentechdata-workday"
   partitions_count = 6
   rest_endpoint    = var.kafka_rest_endpoint
   config = {

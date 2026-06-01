@@ -1,6 +1,6 @@
 -- Step 3: Transform Workday messages to SOAP XML via UDF
 -- Reads from:  standard-eda-bentechdata-flink-workday      (flink_common.avsc — camelCase)
--- Success  →   standard-eda-bentech-workday                (flink_bentechsink_workday.avsc)
+-- Success  →   standard-eda-bentechdata-workday                (flink_bentechsink_workday.avsc)
 -- DLQ      →   standard-eda-bentechdata-flink-workday-dlq  (flink_common.avsc — camelCase)
 -- Note: one input message produces N output messages (one per employer/employee/coverage combo)
 
@@ -8,7 +8,7 @@ EXECUTE STATEMENT SET
 BEGIN
 
   -- Success path: UDF returned a result with no exception
-  INSERT INTO `standard-eda-bentech-workday`
+  INSERT INTO `standard-eda-bentechdata-workday`
   (kafka_key, flattenedEvent, exception, targetBentechPayload, targetBentech, groupId, eventType, correlationId)
   SELECT
     src.kafka_key,

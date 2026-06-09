@@ -33,13 +33,13 @@ Terraform needs one credential to bootstrap — it uses this to create all other
 **Step 1 — Create the service account:**
 1. Go to **hamburger menu (≡) → Accounts & access → Service accounts**
 2. Click **+ Add service account**
-3. Name it `terraform-bootstrap`, add a description like "Terraform will use this key to create resources"
+3. Name it ``, add a description like "Terraform will use this key to create resources"
 4. Click **Create**
 
 **Step 2 — Assign it admin access:**
 1. Go to **hamburger menu (≡) → Accounts & access → Roles**
 2. Find `terraform-bootstrap` and assign it the **OrganizationAdmin** role
-
+terraform-bootstrap
 **Step 3 — Create its API key:**
 1. Go to **hamburger menu (≡) → Cloud API keys → + Add API key**
 2. Select **Service account** → choose `terraform-bootstrap`
@@ -58,7 +58,6 @@ Terraform needs one credential to bootstrap — it uses this to create all other
 After Stage 1 applies, run `terraform output` to get the service account credentials for Stage 2:
 
 ```
-terraform output flink_compute_pool_id       → flink_compute_pool_id
 terraform output flink_runner_sa_id          → flink_principal_id
 terraform output flink_runner_api_key_id     → flink_api_key
 terraform output -raw flink_runner_api_key_secret → flink_api_secret

@@ -341,6 +341,12 @@ resource "confluent_role_binding" "connect_consumer_group" {
   crn_pattern = "${data.confluent_kafka_cluster.standard_poc.rbac_crn}/kafka=${data.confluent_kafka_cluster.standard_poc.id}/group=standard-connect"
 }
 
+resource "confluent_role_binding" "connect_cluster_admin" {
+  principal   = "User:${confluent_service_account.connect.id}"
+  role_name   = "CloudClusterAdmin"
+  crn_pattern = data.confluent_kafka_cluster.standard_poc.rbac_crn
+}
+
 resource "confluent_api_key" "connect_kafka_key" {
   display_name = "standard-connect-sa-kafka-api-key"
   description  = "Issued to: standard-connect-sa, Owner: Standard Insurance Platform Team"
@@ -357,7 +363,7 @@ resource "confluent_api_key" "connect_kafka_key" {
       id = var.environment_id
     }
   }
-  depends_on = [confluent_role_binding.connect_configs_read]
+  depends_on = [confluent_role_binding.connect_cluster_admin]
 }
 
 resource "confluent_api_key" "connect_sr_key" {

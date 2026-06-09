@@ -42,13 +42,13 @@ variable "cluster_admin_kafka_key_secret" {
   sensitive   = true
 }
 
-variable "sr_admin_key_id" {
+variable "sr_admin_sr_key_id" {
   description = "SR API key ID for standard-sr-admin-sa — from stage0 output sr_admin_sr_key_id"
   type        = string
   sensitive   = true
 }
 
-variable "sr_admin_key_secret" {
+variable "sr_admin_sr_key_secret" {
   description = "SR API key secret for standard-sr-admin-sa — from stage0 output sr_admin_sr_key_secret"
   type        = string
   sensitive   = true

@@ -6,8 +6,8 @@
       "correlationId":      {"string": "abc123-xyz"},
       "groupId":            {"string": "WMT-12345"},
       "targetBentech":      {"string": "Workday"},
-      "targetHostname":     {"string": "https://wd2-impl-services1.workday.com"},
-      "targetTokenHostname":{"string": "https://wd2-impl-services1.workday.com"},
+      "targetHostname":     {"string": "https://wd2-impl-services1.workday.com/ccx/service/standard_gms3/Benefits_Administration/v45.0"},
+      "targetTokenHostname":{"string": "https://wd2-impl-services1.workday.com/ccx/oauth2/standard_gms3/token"},
       "eventType":          {"string": "BenefitsEOI"},
       "contentType":        {"string": "application/avro"},
       "workerId":           {"string": "100319TS"}

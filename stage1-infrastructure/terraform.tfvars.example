@@ -15,5 +15,5 @@ schema_registry_url = ""   # https://psrc-xxxxx.<region>.aws.confluent.cloud
 # ============================================================
 cluster_admin_kafka_key_id     = ""   # from: terraform output cluster_admin_kafka_key_id (stage0)
 cluster_admin_kafka_key_secret = ""   # from: terraform output cluster_admin_kafka_key_secret (stage0)
-sr_admin_key_id                = ""   # from: terraform output sr_admin_sr_key_id (stage0)
-sr_admin_key_secret            = ""   # from: terraform output sr_admin_sr_key_secret (stage0)
+sr_admin_sr_key_id                = ""   # from: terraform output sr_admin_sr_key_id (stage0)
+sr_admin_sr_key_secret            = ""   # from: terraform output sr_admin_sr_key_secret (stage0)

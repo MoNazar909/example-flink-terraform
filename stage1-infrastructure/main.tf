@@ -233,8 +233,8 @@ resource "confluent_schema" "eoi_source_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/evidence_of_insurability.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.eoi_source]
 }
@@ -248,8 +248,8 @@ resource "confluent_schema" "flink_common_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.flink_common]
 }
@@ -263,8 +263,8 @@ resource "confluent_schema" "flink_workday_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.flink_workday]
 }
@@ -278,8 +278,8 @@ resource "confluent_schema" "flink_workday_dlq_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_common.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
 }
@@ -293,8 +293,8 @@ resource "confluent_schema" "workday_sink_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/flink_bentechsink_workday.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.workday_sink]
 }
@@ -308,8 +308,8 @@ resource "confluent_schema" "workday_response_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/bentechsink_response.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.workday_response]
 }
@@ -323,8 +323,8 @@ resource "confluent_schema" "workday_error_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/bentechsink_response.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.workday_error]
 }
@@ -338,8 +338,8 @@ resource "confluent_schema" "workday_connector_dlq_value" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/bentechsink_response.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.workday_connector_dlq]
 }
@@ -359,8 +359,8 @@ resource "confluent_schema" "eoi_source_key" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.eoi_source]
 }
@@ -374,8 +374,8 @@ resource "confluent_schema" "flink_common_key" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.flink_common]
 }
@@ -389,8 +389,8 @@ resource "confluent_schema" "flink_workday_key" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.flink_workday]
 }
@@ -404,8 +404,8 @@ resource "confluent_schema" "flink_workday_dlq_key" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.flink_workday_dlq]
 }
@@ -419,8 +419,8 @@ resource "confluent_schema" "workday_sink_key" {
   format        = "AVRO"
   schema        = file("${path.module}/schemas/kafka_key.avsc")
   credentials {
-    key    = var.sr_admin_key_id
-    secret = var.sr_admin_key_secret
+    key    = var.sr_admin_sr_key_id
+    secret = var.sr_admin_sr_key_secret
   }
   depends_on = [confluent_kafka_topic.workday_sink]
 }
